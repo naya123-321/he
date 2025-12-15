@@ -1,6 +1,7 @@
 package com.example.demo.vo;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class TemplateVO {
     private Long id;
@@ -9,6 +10,7 @@ public class TemplateVO {
     private String category;
     private String categoryText;
     private String previewImage;
+    private List<String> templateImages;
     private String styleConfig;
     private String layoutConfig;
     private Integer status;
@@ -65,6 +67,14 @@ public class TemplateVO {
 
     public void setPreviewImage(String previewImage) {
         this.previewImage = previewImage;
+    }
+
+    public List<String> getTemplateImages() {
+        return templateImages;
+    }
+
+    public void setTemplateImages(List<String> templateImages) {
+        this.templateImages = templateImages;
     }
 
     public String getStyleConfig() {

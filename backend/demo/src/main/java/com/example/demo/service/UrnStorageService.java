@@ -106,10 +106,10 @@ public class UrnStorageService {
         }
         
         UrnStorage urnStorage = urnStorageOpt.get();
-        // 验证权限：只有寄存人或管理员可以取回
+        // 验证权限：寄存人 / 管理员 / 服务人员可取回
         if (!urnStorage.getUserId().equals(userId)) {
             var userInfo = userService.getUserInfo(userId);
-            if (userInfo.getRole() == null || userInfo.getRole() != 2) {
+            if (userInfo.getRole() == null || (userInfo.getRole() != 1 && userInfo.getRole() != 2)) {
                 throw new RuntimeException("无权操作");
             }
         }
@@ -132,7 +132,8 @@ public class UrnStorageService {
         UrnStorage urnStorage = urnStorageOpt.get();
         // 验证权限
         var userInfo = userService.getUserInfo(userId);
-        if (userInfo.getRole() == null || userInfo.getRole() != 2) {
+        // 管理员/服务人员可编辑任意记录；宠主仅可编辑自己的记录
+        if (userInfo.getRole() == null || (userInfo.getRole() != 1 && userInfo.getRole() != 2)) {
             if (!urnStorage.getUserId().equals(userId)) {
                 throw new RuntimeException("无权操作");
             }

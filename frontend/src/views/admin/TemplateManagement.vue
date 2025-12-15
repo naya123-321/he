@@ -25,7 +25,6 @@
           clearable
           style="width: 120px; margin-left: 10px"
         >
-          <el-option label="全部" :value="undefined" />
           <el-option label="启用" :value="1" />
           <el-option label="禁用" :value="0" />
         </el-select>
@@ -63,7 +62,7 @@
           <el-image
             v-if="row.previewImage"
             :src="row.previewImage"
-            :preview-src-list="[row.previewImage]"
+            :preview-src-list="(row.templateImages && row.templateImages.length > 0) ? row.templateImages : [row.previewImage]"
             fit="cover"
             style="width: 80px; height: 80px; border-radius: 4px"
           />
@@ -109,8 +108,10 @@
       @close="handleDialogClose"
     >
       <TemplateEditor
+        :key="editorKey"
         ref="templateEditorRef"
-        v-model="formData"
+        :model-value="formData"
+        @update:model-value="(val) => Object.assign(formData, val)"
       />
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -143,6 +144,7 @@ const filterCategory = ref<string>("");
 const dialogVisible = ref(false);
 const dialogTitle = ref("添加模板");
 const templateEditorRef = ref();
+const editorKey = ref(0);
 const formData = reactive<TemplateCreateDTO>({
   name: "",
   description: "",
@@ -209,6 +211,7 @@ const handleReset = () => {
 const handleAdd = () => {
   dialogTitle.value = "添加模板";
   editingId.value = null;
+  editorKey.value++;
   Object.assign(formData, {
     name: "",
     description: "",
@@ -225,6 +228,7 @@ const handleAdd = () => {
 const handleEdit = (row: TemplateVO) => {
   dialogTitle.value = "编辑模板";
   editingId.value = row.id;
+  editorKey.value++;
   
   // 尝试从styleConfig中解析templateImages
   let templateImages: string[] = [];
@@ -365,6 +369,7 @@ const handleDialogClose = () => {
     description: "",
     category: "",
     previewImage: "",
+    templateImages: [],
     styleConfig: "",
     layoutConfig: "",
   });

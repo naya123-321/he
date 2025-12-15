@@ -45,10 +45,10 @@
           :key="template.id"
           class="template-card"
           :class="{ selected: selectedTemplateId === template.id }"
-          @click="selectTemplate(template)"
+          @click="handleTemplateClick(template)"
         >
           <div class="template-preview">
-            <img v-if="template.coverImage" :src="template.coverImage" :alt="template.name" />
+            <img v-if="getTemplateCover(template)" :src="getTemplateCover(template)" :alt="template.name" />
             <div v-else class="template-placeholder">
               <el-icon :size="60"><Picture /></el-icon>
               <span>暂无预览</span>
@@ -61,8 +61,10 @@
             <h4>{{ template.name }}</h4>
             <p>{{ template.description || '精美的纪念册模板' }}</p>
             <div class="template-footer">
-              <el-tag v-if="template.isFree" type="success" size="small">免费</el-tag>
-              <span v-else class="price">¥{{ template.price }}</span>
+              <el-tag type="info" size="small">{{ template.categoryText || getCategoryText(template.category) }}</el-tag>
+              <el-tag v-if="getTemplateImages(template).length > 0" type="success" size="small">
+                {{ getTemplateImages(template).length }} 张
+              </el-tag>
             </div>
           </div>
         </div>
@@ -79,6 +81,46 @@
           下一步：上传照片
         </el-button>
       </div>
+
+      <!-- 模板图片预览 -->
+      <el-dialog v-model="previewDialogVisible" title="模板图片预览" width="920px">
+        <div v-if="previewTemplate" class="template-preview-dialog">
+          <div class="dialog-header">
+            <div class="title-area">
+              <div class="name">{{ previewTemplate.name }}</div>
+              <div class="desc">{{ previewTemplate.description || "—" }}</div>
+            </div>
+            <el-tag type="info">
+              {{ previewTemplate.categoryText || getCategoryText(previewTemplate.category) }}
+            </el-tag>
+          </div>
+
+          <el-empty v-if="previewImages.length === 0" description="暂无模板图片" />
+
+          <el-carousel v-else height="520px" indicator-position="outside">
+            <el-carousel-item v-for="(url, idx) in previewImages" :key="url">
+              <el-image
+                :src="url"
+                fit="contain"
+                style="width: 100%; height: 520px"
+                :preview-src-list="previewImages"
+                :initial-index="idx"
+              />
+            </el-carousel-item>
+          </el-carousel>
+        </div>
+
+        <template #footer>
+          <el-button @click="previewDialogVisible = false">关闭</el-button>
+          <el-button
+            type="primary"
+            :disabled="!previewTemplate"
+            @click="selectFromPreview"
+          >
+            选择该模板
+          </el-button>
+        </template>
+      </el-dialog>
     </div>
 
     <!-- 步骤2: 照片上传 -->
@@ -433,9 +475,11 @@ const memorialRules = reactive({
 // 上传配置
 const uploadAction = computed(() => {
   if (memorialStore.currentMemorial?.id) {
-    return `/memorial/upload-image/${memorialStore.currentMemorial.id}`;
+    // 通过后端 /api 前缀访问上传接口
+    return `/api/memorial/upload-image/${memorialStore.currentMemorial.id}`;
   }
-  return "/memorial/upload-image/temp";
+  // 未创建纪念册前，先上传到 temp 目录
+  return "/api/memorial/upload-image/temp";
 });
 
 const uploadHeaders = computed(() => {
@@ -521,6 +565,68 @@ const handleCategoryChange = () => {
   selectedTemplateId.value = null;
   selectedTemplate.value = null;
 };
+
+function getCategoryText(category?: string) {
+  if (!category) return "其他";
+  const map: Record<string, string> = {
+    simple: "简约风格",
+    warm: "温馨风格",
+    classic: "经典风格",
+    modern: "现代风格",
+    vintage: "复古风格",
+    literary: "文艺风格",
+    other: "其他",
+    all: "全部",
+  };
+  return map[category] || "其他";
+}
+
+function getTemplateImages(template: TemplateVO): string[] {
+  if (template.templateImages && template.templateImages.length > 0) return template.templateImages;
+  if (template.previewImage) return [template.previewImage];
+  // 兜底：从 styleConfig 里解析（兼容极端情况下后端未返回 templateImages）
+  if (template.styleConfig) {
+    try {
+      const parsed = JSON.parse(template.styleConfig);
+      const images = parsed?.templateImages;
+      if (Array.isArray(images)) {
+        return images.filter((x: any) => typeof x === "string" && x.trim().length > 0);
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return [];
+}
+
+function getTemplateCover(template: TemplateVO): string {
+  return template.previewImage || getTemplateImages(template)[0] || "";
+}
+
+// 模板预览弹窗：点击模板即可查看图片
+const previewDialogVisible = ref(false);
+const previewTemplate = ref<TemplateVO | null>(null);
+const previewImages = computed(() => {
+  if (!previewTemplate.value) return [];
+  return getTemplateImages(previewTemplate.value);
+});
+
+function openPreview(template: TemplateVO) {
+  previewTemplate.value = template;
+  previewDialogVisible.value = true;
+}
+
+function handleTemplateClick(template: TemplateVO) {
+  // 保持“点击模板即预览”的交互，同时也默认选中，方便直接下一步
+  selectTemplate(template);
+  openPreview(template);
+}
+
+function selectFromPreview() {
+  if (!previewTemplate.value) return;
+  selectTemplate(previewTemplate.value);
+  previewDialogVisible.value = false;
+}
 
 // 上传前验证
 const beforeUpload = (file: File) => {
@@ -805,6 +911,7 @@ onMounted(async () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
 
             .price {
               font-weight: bold;
@@ -813,6 +920,35 @@ onMounted(async () => {
             }
           }
         }
+      }
+    }
+
+    .template-preview-dialog {
+      .dialog-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .title-area {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .name {
+        font-size: 16px;
+        font-weight: 700;
+        color: #303133;
+      }
+
+      .desc {
+        font-size: 13px;
+        color: #909399;
+        word-break: break-word;
       }
     }
 

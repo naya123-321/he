@@ -30,7 +30,7 @@
             :before-upload="beforeUpload"
             :on-success="handleUploadSuccess"
             :on-remove="handleRemove"
-            :file-list="fileList"
+            v-model:file-list="fileList"
             list-type="picture-card"
             accept="image/*"
             multiple
@@ -118,19 +118,9 @@ const initFileList = () => {
 // 初始化
 initFileList();
 
-// 监听props变化，重新初始化文件列表（用于编辑时）
-watch(
-  () => props.modelValue,
-  () => {
-    formData.name = props.modelValue?.name || "";
-    formData.description = props.modelValue?.description || "";
-    formData.category = props.modelValue?.category || "";
-    formData.previewImage = props.modelValue?.previewImage || "";
-    formData.templateImages = props.modelValue?.templateImages || [];
-    initFileList();
-  },
-  { deep: true, immediate: false }
-);
+// 注意：不要对 props.modelValue 做 deep watch 再反向初始化 fileList，
+// 否则每次输入都会触发重置 fileList（含 Date.now uid），容易导致弹窗内下拉框/Popper 点击异常。
+// 编辑/新增时由父组件通过变更 key 强制重挂载来完成初始化。
 
 const rules = {
   name: [{ required: true, message: "请输入模板名称", trigger: "blur" }],

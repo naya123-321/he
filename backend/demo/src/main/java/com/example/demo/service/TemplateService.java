@@ -4,12 +4,16 @@ import com.example.demo.dto.TemplateCreateDTO;
 import com.example.demo.entity.Template;
 import com.example.demo.repository.TemplateRepository;
 import com.example.demo.vo.TemplateVO;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,6 +23,8 @@ public class TemplateService {
     
     @Autowired
     private UserService userService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 获取所有模板
@@ -122,6 +128,9 @@ public class TemplateService {
     private TemplateVO convertToVO(Template template) {
         TemplateVO vo = new TemplateVO();
         BeanUtils.copyProperties(template, vo);
+
+        // 从 styleConfig 解析 templateImages（兼容旧数据：仅 previewImage）
+        vo.setTemplateImages(extractTemplateImages(template.getStyleConfig(), template.getPreviewImage()));
         
         // 设置状态文本
         if (template.getStatus() != null) {
@@ -145,6 +154,32 @@ public class TemplateService {
         }
         
         return vo;
+    }
+
+    private List<String> extractTemplateImages(String styleConfig, String previewImage) {
+        // 优先使用 styleConfig 中的 templateImages
+        if (styleConfig != null && !styleConfig.isBlank()) {
+            try {
+                Map<String, Object> map = objectMapper.readValue(styleConfig, new TypeReference<Map<String, Object>>() {});
+                Object imagesObj = map.get("templateImages");
+                if (imagesObj instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<Object> rawList = (List<Object>) imagesObj;
+                    List<String> urls = rawList.stream()
+                        .filter(o -> o != null && !String.valueOf(o).isBlank())
+                        .map(String::valueOf)
+                        .collect(Collectors.toList());
+                    if (!urls.isEmpty()) return urls;
+                }
+            } catch (Exception ignored) {
+                // 解析失败则走兼容逻辑
+            }
+        }
+
+        if (previewImage != null && !previewImage.isBlank()) {
+            return Collections.singletonList(previewImage);
+        }
+        return Collections.emptyList();
     }
 
     /**
