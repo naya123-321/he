@@ -1,0 +1,1019 @@
+<template>
+  <div class="dashboard-container">
+    <el-page-header @back="goBack" content="管理员仪表盘" />
+
+    <div class="dashboard-intro">
+      <h2>欢迎回来，管理员</h2>
+      <p>实时监控系统运行状态和数据统计</p>
+    </div>
+
+    <!-- 统计卡片 -->
+    <el-row :gutter="20" class="stats-row">
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card clickable-card" @click="goToOrderList">
+          <div class="stat-content">
+            <div class="stat-info">
+              <div class="stat-value">{{ totalOrders }}</div>
+              <div class="stat-label">总订单数</div>
+            </div>
+            <el-icon class="stat-icon"><ShoppingBag /></el-icon>
+          </div>
+          <div class="stat-trend" v-if="orderTrend.value > 0">
+            <span class="trend-text">
+              <el-icon :color="orderTrend.color"><ArrowUp /></el-icon>
+              {{ orderTrend.value }}% 较昨日
+            </span>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card clickable-card" @click="goToPendingOrders">
+          <div class="stat-content">
+            <div class="stat-info">
+              <div class="stat-value">{{ pendingOrders }}</div>
+              <div class="stat-label">待处理订单</div>
+            </div>
+            <el-icon class="stat-icon"><Clock /></el-icon>
+          </div>
+          <div class="stat-trend" v-if="pendingTrend.value > 0">
+            <span class="trend-text">
+              <el-icon :color="pendingTrend.color"><ArrowDown /></el-icon>
+              {{ pendingTrend.value }}% 较昨日
+            </span>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card clickable-card" @click="goToMemorialList">
+          <div class="stat-content">
+            <div class="stat-info">
+              <div class="stat-value">{{ totalMemorials }}</div>
+              <div class="stat-label">纪念册总数</div>
+            </div>
+            <el-icon class="stat-icon"><Picture /></el-icon>
+          </div>
+          <div class="stat-trend" v-if="memorialTrend.value > 0">
+            <span class="trend-text">
+              <el-icon :color="memorialTrend.color"><ArrowUp /></el-icon>
+              {{ memorialTrend.value }}% 较昨日
+            </span>
+          </div>
+        </el-card>
+      </el-col>
+
+      <el-col :xs="24" :sm="12" :lg="6">
+        <el-card shadow="hover" class="stat-card clickable-card" @click="goToUserManagement">
+          <div class="stat-content">
+            <div class="stat-info">
+              <div class="stat-value">{{ totalUsers }}</div>
+              <div class="stat-label">用户总数</div>
+            </div>
+            <el-icon class="stat-icon"><User /></el-icon>
+          </div>
+          <div class="stat-trend" v-if="userTrend.value > 0">
+            <span class="trend-text">
+              <el-icon :color="userTrend.color"><ArrowUp /></el-icon>
+              {{ userTrend.value }}% 较昨日
+            </span>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 图表区域 -->
+    <el-row :gutter="20" class="charts-row">
+      <!-- 订单趋势图 -->
+      <el-col :xs="24" :lg="12">
+        <el-card shadow="hover" class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <h3>订单趋势</h3>
+              <el-select
+                v-model="chartTimeRange"
+                placeholder="选择时间范围"
+                size="small"
+                @change="handleTimeRangeChange"
+              >
+                <el-option label="近7天" value="7d" />
+                <el-option label="近30天" value="30d" />
+                <el-option label="近90天" value="90d" />
+              </el-select>
+            </div>
+          </template>
+          <div class="chart-container">
+            <div
+              ref="orderTrendChartContainer"
+              v-loading="orderTrendChartLoading"
+              style="width: 100%; height: 300px;"
+            ></div>
+            <el-empty
+              v-if="!orderTrendChartLoading && orderTrendData.dateLabels.length === 0"
+              description="暂无订单数据"
+              :image-size="80"
+            />
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 服务类型分布 -->
+      <el-col :xs="24" :lg="12">
+        <el-card shadow="hover" class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <h3>服务类型分布</h3>
+            </div>
+          </template>
+          <div class="chart-container">
+            <div
+              ref="serviceTypeChartContainer"
+              v-loading="serviceTypeChartLoading"
+              style="width: 100%; height: 300px;"
+            ></div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 最近订单和待处理任务 -->
+    <el-row :gutter="20" class="tasks-row">
+      <!-- 最近订单 -->
+      <el-col :xs="24" :lg="12">
+        <el-card shadow="hover" class="tasks-card">
+          <template #header>
+            <div class="card-header">
+              <h3>最近订单</h3>
+              <el-button type="text" @click="viewAllOrders">查看全部</el-button>
+            </div>
+          </template>
+
+          <div v-if="recentOrders.length === 0" class="empty-data">
+            <el-empty description="暂无订单" />
+          </div>
+
+          <div v-else class="recent-orders-list">
+            <div
+              v-for="order in recentOrders"
+              :key="order.id"
+              class="recent-order-item"
+              @click="viewOrderDetail(order)"
+            >
+              <div class="order-info">
+                <div class="order-no">订单号：{{ order.orderNo }}</div>
+                <div class="order-time">{{ formatDate(order.createTime) }}</div>
+              </div>
+              <div class="order-details">
+                <div class="pet-info">
+                  <span class="pet-name">{{ order.petName }}</span>
+                  <span class="pet-type">({{ order.petType }})</span>
+                </div>
+                <el-tag :type="getStatusType(order.status)">
+                  {{ getStatusText(order.status) }}
+                </el-tag>
+              </div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+
+      <!-- 待处理任务 -->
+      <el-col :xs="24" :lg="12">
+        <el-card shadow="hover" class="tasks-card">
+          <template #header>
+            <div class="card-header">
+              <h3>待处理任务</h3>
+              <el-button type="text" @click="viewAllTasks">查看全部</el-button>
+            </div>
+          </template>
+
+          <div v-if="pendingTasks.length === 0" class="empty-data">
+            <el-empty description="暂无待处理任务" />
+          </div>
+
+          <div v-else class="pending-tasks-list">
+            <el-timeline>
+              <el-timeline-item
+                v-for="task in pendingTasks"
+                :key="task.id"
+                :timestamp="task.createTime"
+                :type="task.type === 'memorial' ? 'primary' : 'warning'"
+              >
+                <div class="task-content">
+                  <div class="task-title">{{ task.title }}</div>
+                  <div class="task-description">{{ task.description }}</div>
+                  <div class="task-actions">
+                    <el-button
+                      v-if="task.type === 'memorial'"
+                      type="primary"
+                      size="small"
+                      @click.stop="reviewMemorial(task)"
+                    >
+                      审核
+                    </el-button>
+                    <el-button
+                      v-if="task.type === 'order'"
+                      type="success"
+                      size="small"
+                      @click.stop="processOrder(task)"
+                    >
+                      处理
+                    </el-button>
+                  </div>
+                </div>
+              </el-timeline-item>
+            </el-timeline>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, computed, nextTick, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { orderApi } from "@/api/order";
+import { getUserList } from "@/api/user";
+import * as echarts from "echarts";
+
+const router = useRouter();
+
+// 统计数据
+const totalOrders = ref(0);
+const pendingOrders = ref(0);
+const totalMemorials = ref(0);
+const totalUsers = ref(0);
+
+// 趋势数据（暂时隐藏，因为没有历史数据计算）
+const orderTrend = ref({ value: 0, color: "#909399" });
+const pendingTrend = ref({ value: 0, color: "#909399" });
+const memorialTrend = ref({ value: 0, color: "#909399" });
+const userTrend = ref({ value: 0, color: "#909399" });
+
+// 图表时间范围
+const chartTimeRange = ref("7d");
+
+// 订单趋势图表
+const orderTrendChartContainer = ref<HTMLElement | null>(null);
+const orderTrendChartLoading = ref(false);
+const orderTrendData = ref<{
+  dateLabels: string[];
+  orderCounts: number[];
+  totalOrders: number;
+}>({
+  dateLabels: [],
+  orderCounts: [],
+  totalOrders: 0,
+});
+let orderTrendChartInstance: echarts.ECharts | null = null;
+let orderTrendChartResizeHandler: (() => void) | null = null;
+
+// 服务类型分布图表
+const serviceTypeChartContainer = ref<HTMLElement | null>(null);
+const serviceTypeChartLoading = ref(false);
+let serviceTypeChartInstance: echarts.ECharts | null = null;
+let serviceTypeChartResizeHandler: (() => void) | null = null;
+
+// 最近订单
+const recentOrders = ref<any[]>([]);
+
+// 待处理任务（模拟数据）
+const pendingTasks = ref([
+  {
+    id: 1,
+    type: "memorial",
+    title: "纪念册审核",
+    description: "用户提交了新的纪念册需要审核",
+    createTime: "2025-12-08 11:30:00",
+  },
+  {
+    id: 2,
+    type: "order",
+    title: "新订单待处理",
+    description: "有新的服务订单需要处理",
+    createTime: "2025-12-08 10:15:00",
+  },
+  {
+    id: 3,
+    type: "memorial",
+    title: "纪念册审核",
+    description: "用户提交了新的纪念册需要审核",
+    createTime: "2025-12-08 09:30:00",
+  },
+]);
+
+// 状态类型映射
+const getStatusType = (status: number) => {
+  const typeMap: Record<number, string> = {
+    0: "warning",  // 待确认
+    1: "primary",  // 已确认
+    2: "success",  // 服务中
+    3: "info",     // 已完成
+    4: "danger",   // 已取消
+  };
+  return typeMap[status] || "info";
+};
+
+// 状态文本映射
+const getStatusText = (status: number) => {
+  const textMap: Record<number, string> = {
+    0: "待确认",
+    1: "已确认",
+    2: "服务中",
+    3: "已完成",
+    4: "已取消",
+  };
+  return textMap[status] || "未知";
+};
+
+// 格式化日期
+const formatDate = (dateString: string) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+// 返回上一页
+const goBack = () => {
+  router.back();
+};
+
+// 跳转到订单列表（全部订单）
+const goToOrderList = () => {
+  router.push("/order/list");
+};
+
+// 跳转到待处理订单列表
+const goToPendingOrders = () => {
+  router.push("/admin/pending-tasks");
+};
+
+// 跳转到纪念册列表
+const goToMemorialList = () => {
+  router.push("/admin/memorial-review");
+};
+
+// 跳转到用户管理
+const goToUserManagement = () => {
+  router.push("/admin/user-management");
+};
+
+// 查看全部订单
+const viewAllOrders = () => {
+  router.push("/order/list");
+};
+
+// 查看全部任务
+const viewAllTasks = () => {
+  router.push("/admin/pending-tasks");
+};
+
+// 查看订单详情
+const viewOrderDetail = (order: any) => {
+  router.push(`/order/detail/${order.id}`);
+};
+
+// 审核纪念册
+const reviewMemorial = (task: any) => {
+  router.push("/admin/memorial-review");
+};
+
+// 处理订单
+const processOrder = (task: any) => {
+  router.push("/order/list");
+};
+
+// 页面加载时获取数据
+onMounted(async () => {
+  await loadDashboardData();
+  await nextTick();
+  await loadOrderTrend();
+  await loadServiceTypeDistribution();
+});
+
+onUnmounted(() => {
+  // 移除resize监听
+  if (orderTrendChartResizeHandler) {
+    window.removeEventListener('resize', orderTrendChartResizeHandler);
+    orderTrendChartResizeHandler = null;
+  }
+  if (serviceTypeChartResizeHandler) {
+    window.removeEventListener('resize', serviceTypeChartResizeHandler);
+    serviceTypeChartResizeHandler = null;
+  }
+  
+  // 销毁图表实例
+  if (orderTrendChartInstance) {
+    orderTrendChartInstance.dispose();
+    orderTrendChartInstance = null;
+  }
+  if (serviceTypeChartInstance) {
+    serviceTypeChartInstance.dispose();
+    serviceTypeChartInstance = null;
+  }
+});
+
+// 加载仪表盘数据
+const loadDashboardData = async () => {
+  try {
+    // 并行获取订单和用户数据
+    const [orderRes, userRes] = await Promise.all([
+      orderApi.getOrderList({
+        pageNum: 1,
+        pageSize: 100, // 获取足够多的订单用于统计
+      }),
+      getUserList({
+        pageNum: 1,
+        pageSize: 100, // 获取足够多的用户用于统计
+      }).catch(() => null), // 如果获取用户列表失败，继续执行
+    ]);
+    
+    // 处理订单数据
+    if (orderRes && orderRes.code === 200 && orderRes.data) {
+      const allOrders = orderRes.data.records;
+      
+      // 统计总订单数
+      totalOrders.value = orderRes.data.total || allOrders.length;
+      
+      // 统计待处理订单（status = 0）
+      pendingOrders.value = allOrders.filter((o: any) => o.status === 0).length;
+      
+      // 获取最近5个订单
+      recentOrders.value = allOrders
+        .sort((a: any, b: any) => {
+          const timeA = new Date(a.createTime).getTime();
+          const timeB = new Date(b.createTime).getTime();
+          return timeB - timeA; // 按创建时间倒序
+        })
+        .slice(0, 5)
+        .map((order: any) => ({
+          id: order.id,
+          orderNo: order.orderNo,
+          status: order.status,
+          petName: order.petName,
+          petType: order.petType,
+          createTime: order.createTime,
+        }));
+      
+      // 更新待处理任务列表（包含待确认的订单）
+      const pendingOrderTasks = allOrders
+        .filter((o: any) => o.status === 0)
+        .slice(0, 3)
+        .map((order: any) => ({
+          id: order.id,
+          type: "order",
+          title: "新订单待处理",
+          description: `订单号：${order.orderNo}，宠物：${order.petName}`,
+          createTime: order.createTime,
+        }));
+      
+      // 合并待处理任务（这里可以添加纪念册审核任务）
+      pendingTasks.value = [...pendingOrderTasks];
+    }
+    
+    // 处理用户数据
+    if (userRes && userRes.code === 200 && userRes.data) {
+      totalUsers.value = userRes.data.total || userRes.data.records.length;
+    }
+    
+    // 纪念册数据暂时设为0，后续可以添加纪念册API
+    totalMemorials.value = 0;
+  } catch (error) {
+    console.error("加载仪表盘数据失败:", error);
+  }
+};
+
+// 时间范围变化处理
+const handleTimeRangeChange = () => {
+  loadOrderTrend();
+};
+
+// 加载订单趋势数据
+const loadOrderTrend = async () => {
+  if (!orderTrendChartContainer.value) return;
+  
+  orderTrendChartLoading.value = true;
+  try {
+    // 将时间范围字符串转换为天数
+    const daysMap: Record<string, number> = {
+      '7d': 7,
+      '30d': 30,
+      '90d': 90,
+    };
+    const days = daysMap[chartTimeRange.value] || 7;
+    
+    const res = await orderApi.getOrderTrend(days);
+    if (res && res.code === 200 && res.data) {
+      orderTrendData.value = res.data;
+      renderOrderTrendChart(res.data.dateLabels, res.data.orderCounts);
+    } else {
+      console.error("获取订单趋势失败");
+      orderTrendData.value = {
+        dateLabels: [],
+        orderCounts: [],
+        totalOrders: 0,
+      };
+    }
+  } catch (error) {
+    console.error("加载订单趋势失败:", error);
+    orderTrendData.value = {
+      dateLabels: [],
+      orderCounts: [],
+      totalOrders: 0,
+    };
+  } finally {
+    orderTrendChartLoading.value = false;
+  }
+};
+
+// 渲染订单趋势图表
+const renderOrderTrendChart = (dateLabels: string[], orderCounts: number[]) => {
+  if (!orderTrendChartContainer.value) return;
+  
+  // 初始化图表实例
+  if (!orderTrendChartInstance) {
+    orderTrendChartInstance = echarts.init(orderTrendChartContainer.value);
+  }
+  
+  // 格式化日期标签（只显示月-日）
+  const formattedLabels = dateLabels.map(date => {
+    const d = new Date(date);
+    return `${d.getMonth() + 1}-${d.getDate()}`;
+  });
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross',
+        label: {
+          backgroundColor: '#6a7985'
+        }
+      },
+      formatter: (params: any) => {
+        const param = params[0];
+        const dateIndex = param.dataIndex;
+        const originalDate = dateLabels[dateIndex];
+        return `${originalDate}<br/>订单数: ${param.value}`;
+      },
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: formattedLabels,
+      axisLine: {
+        lineStyle: {
+          color: '#e0e0e0',
+        },
+      },
+      axisLabel: {
+        color: '#606266',
+        fontSize: 12,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: '#e0e0e0',
+        },
+      },
+      axisLabel: {
+        color: '#606266',
+        fontSize: 12,
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#f0f0f0',
+          type: 'dashed',
+        },
+      },
+    },
+    series: [
+      {
+        name: '订单数',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        lineStyle: {
+          color: '#409eff',
+          width: 2,
+        },
+        itemStyle: {
+          color: '#409eff',
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: 'rgba(64, 158, 255, 0.3)',
+              },
+              {
+                offset: 1,
+                color: 'rgba(64, 158, 255, 0.05)',
+              },
+            ],
+          },
+        },
+        data: orderCounts,
+        emphasis: {
+          focus: 'series',
+          itemStyle: {
+            color: '#409eff',
+            borderColor: '#fff',
+            borderWidth: 2,
+            shadowBlur: 10,
+            shadowColor: 'rgba(64, 158, 255, 0.5)',
+          },
+        },
+      },
+    ],
+  };
+  
+  orderTrendChartInstance.setOption(option);
+  
+  // 响应式调整
+  if (orderTrendChartResizeHandler) {
+    window.removeEventListener('resize', orderTrendChartResizeHandler);
+  }
+  orderTrendChartResizeHandler = () => {
+    orderTrendChartInstance?.resize();
+  };
+  window.addEventListener('resize', orderTrendChartResizeHandler);
+};
+
+// 加载服务类型分布数据
+const loadServiceTypeDistribution = async () => {
+  if (!serviceTypeChartContainer.value) return;
+  
+  serviceTypeChartLoading.value = true;
+  try {
+    const res = await orderApi.getServiceTypeDistribution();
+    if (res && res.code === 200 && res.data) {
+      const { distribution, totalOrders } = res.data;
+      renderServiceTypeChart(distribution, totalOrders);
+    } else {
+      console.error("获取服务类型分布失败");
+    }
+  } catch (error) {
+    console.error("加载服务类型分布失败:", error);
+  } finally {
+    serviceTypeChartLoading.value = false;
+  }
+};
+
+// 渲染服务类型分布图表
+const renderServiceTypeChart = (distribution: any[], totalOrders: number) => {
+  if (!serviceTypeChartContainer.value) return;
+  
+  // 初始化图表实例
+  if (!serviceTypeChartInstance) {
+    serviceTypeChartInstance = echarts.init(serviceTypeChartContainer.value);
+  }
+  
+  // 过滤掉没有订单的服务类型（count为0的）
+  const filteredDistribution = distribution.filter(item => item.count > 0);
+  
+  // 如果没有数据，显示空状态
+  if (filteredDistribution.length === 0) {
+    serviceTypeChartInstance.setOption({
+      title: {
+        text: '暂无数据',
+        left: 'center',
+        top: 'center',
+        textStyle: {
+          color: '#909399',
+          fontSize: 14,
+        },
+      },
+    });
+    return;
+  }
+  
+  // 定义颜色方案
+  const colors = [
+    '#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399',
+    '#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de',
+    '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'
+  ];
+  
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: (params: any) => {
+        const percent = totalOrders > 0 
+          ? ((params.value / totalOrders) * 100).toFixed(1) 
+          : '0';
+        return `${params.name}<br/>订单数: ${params.value}<br/>占比: ${percent}%`;
+      },
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left',
+      top: 'middle',
+      itemWidth: 12,
+      itemHeight: 12,
+      textStyle: {
+        fontSize: 12,
+      },
+      // 只显示有数据的服务类型
+      data: filteredDistribution.map(item => item.serviceTypeName),
+    },
+    series: [
+      {
+        name: '服务类型分布',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['60%', '50%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 8,
+          borderColor: '#fff',
+          borderWidth: 2,
+        },
+        label: {
+          show: true,
+          formatter: (params: any) => {
+            const percent = totalOrders > 0 
+              ? ((params.value / totalOrders) * 100).toFixed(1) 
+              : '0';
+            return `${params.name}\n${percent}%`;
+          },
+          fontSize: 12,
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 14,
+            fontWeight: 'bold',
+          },
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
+          },
+        },
+        labelLine: {
+          show: true,
+        },
+        // 只显示有订单的服务类型
+        data: filteredDistribution.map((item, index) => ({
+          value: item.count,
+          name: item.serviceTypeName,
+          itemStyle: {
+            color: colors[index % colors.length],
+          },
+        })),
+      },
+    ],
+  };
+  
+  serviceTypeChartInstance.setOption(option);
+  
+  // 响应式调整
+  if (serviceTypeChartResizeHandler) {
+    window.removeEventListener('resize', serviceTypeChartResizeHandler);
+  }
+  serviceTypeChartResizeHandler = () => {
+    serviceTypeChartInstance?.resize();
+  };
+  window.addEventListener('resize', serviceTypeChartResizeHandler);
+};
+</script>
+
+<style scoped lang="scss">
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.dashboard-intro {
+  margin-bottom: 30px;
+
+  h2 {
+    color: #303133;
+    margin-bottom: 10px;
+  }
+
+  p {
+    color: #606266;
+    font-size: 16px;
+  }
+}
+
+.stats-row {
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &.clickable-card {
+    cursor: pointer;
+    
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    &:active {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.stat-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.stat-info {
+  .stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #303133;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: #909399;
+  }
+}
+
+.stat-icon {
+  font-size: 48px;
+  color: #409eff;
+}
+
+.stat-trend {
+  text-align: right;
+}
+
+.trend-text {
+  font-size: 12px;
+  color: #606266;
+
+  .el-icon {
+    margin-right: 4px;
+  }
+}
+
+.charts-row {
+  margin-bottom: 30px;
+}
+
+.chart-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+    color: #303133;
+    font-size: 16px;
+  }
+}
+
+.chart-container {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.placeholder-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  background-color: #f5f7fa;
+  color: #909399;
+  border-radius: 8px;
+}
+
+.tasks-row {
+  margin-bottom: 30px;
+}
+
+.tasks-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.empty-data {
+  padding: 40px 0;
+  text-align: center;
+}
+
+.recent-orders-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.recent-order-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #ebeef5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #f5f7fa;
+    padding-left: 10px;
+  }
+}
+
+.order-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  .order-no {
+    font-weight: bold;
+    color: #303133;
+  }
+
+  .order-time {
+    font-size: 12px;
+    color: #909399;
+  }
+}
+
+.order-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .pet-info {
+    .pet-name {
+      font-size: 14px;
+      color: #303133;
+    }
+
+    .pet-type {
+      font-size: 12px;
+      color: #909399;
+      margin-left: 4px;
+    }
+  }
+}
+
+.pending-tasks-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.task-content {
+  cursor: pointer;
+
+  .task-title {
+    font-weight: bold;
+    color: #303133;
+    margin-bottom: 4px;
+  }
+
+  .task-description {
+    font-size: 14px;
+    color: #606266;
+    margin-bottom: 10px;
+  }
+}
+</style>
+
