@@ -39,6 +39,31 @@
           </div>
         </div>
 
+        <!-- 所选模板预览 -->
+        <el-card shadow="never" class="block" style="margin-bottom: 16px;">
+          <template #header>
+            <div class="block-title">所选模板</div>
+          </template>
+          <div class="template-meta" v-if="memorialInfo">
+            <el-tag type="info">{{ memorialInfo.templateName || '模板' }}</el-tag>
+            <el-tag v-if="memorialInfo.templateCategory" style="margin-left: 8px;">
+              {{ memorialInfo.templateCategory }}
+            </el-tag>
+          </div>
+
+          <el-empty v-if="templateImages.length === 0" description="暂无模板图片" :image-size="120" />
+          <div v-else class="images">
+            <el-image
+              v-for="url in templateImages"
+              :key="url"
+              :src="url"
+              :preview-src-list="templateImages"
+              fit="cover"
+              style="width: 180px; height: 120px; border-radius: 8px"
+            />
+          </div>
+        </el-card>
+
         <el-divider />
 
         <el-row :gutter="16">
@@ -163,7 +188,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox, ElPageHeader } from 'element-plus';
 import type { UploadFile } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
-import { memorialApi } from '@/api/memorial';
+import { memorialApi, templateApi, type TemplateVO } from '@/api/memorial';
 
 const router = useRouter();
 const route = useRoute();
@@ -174,11 +199,34 @@ const feedbackImageList = ref<UploadFile[]>([]);
 const feedbackPdfList = ref<UploadFile[]>([]);
 const feedbackMessage = ref("");
 const shareUrl = ref("");
+const templateInfo = ref<TemplateVO | null>(null);
 
 const draftImages = computed<string[]>(() => memorialInfo.value?.designDraftImages || []);
 const draftPdf = computed<string | null>(() => memorialInfo.value?.designDraftPdfUrl || null);
 const feedbackImages = computed<string[]>(() => memorialInfo.value?.ownerFeedbackImages || []);
 const feedbackPdf = computed<string | null>(() => memorialInfo.value?.ownerFeedbackPdfUrl || null);
+
+function parseTemplateImages(t: any): string[] {
+  if (Array.isArray(t?.templateImages) && t.templateImages.length > 0) {
+    return t.templateImages.filter(Boolean);
+  }
+  if (t?.styleConfig) {
+    try {
+      const parsed = JSON.parse(t.styleConfig);
+      const imgs = parsed?.templateImages;
+      if (Array.isArray(imgs) && imgs.length > 0) return imgs.filter(Boolean);
+    } catch {
+      // ignore
+    }
+  }
+  if (t?.previewImage) return [t.previewImage];
+  return [];
+}
+
+const templateImages = computed<string[]>(() => {
+  // 优先使用 templateInfo（完整），其次 fallback 到 memorialInfo（若后端未来加入字段）
+  return parseTemplateImages(templateInfo.value || memorialInfo.value || {});
+});
 
 const canUploadFeedback = computed(() => {
   const s = memorialInfo.value?.designStatus;
@@ -278,6 +326,19 @@ async function loadMemorial() {
   if (!id) return;
   const res = await memorialApi.getMemorialDetail(Number(id));
   memorialInfo.value = res.data;
+
+  // 加载模板详情（公开接口），用于展示模板图片
+  try {
+    const tid = res.data?.templateId;
+    if (tid) {
+      const tRes = await templateApi.getTemplateById(Number(tid));
+      templateInfo.value = tRes.data || null;
+    } else {
+      templateInfo.value = null;
+    }
+  } catch {
+    templateInfo.value = null;
+  }
 
   // 分享链接：管理员已通过且公开
   if (res.data?.shareToken && res.data?.isPublic && res.data?.designStatus === 60) {

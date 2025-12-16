@@ -218,6 +218,45 @@
           class="memorial-form"
         >
           <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="关联订单" prop="orderId" style="margin-bottom: 20px">
+                <el-select
+                  v-model="memorialForm.orderId"
+                  placeholder="请选择已完成订单（仅已完成订单可创建纪念册）"
+                  clearable
+                  filterable
+                  style="width: 100%"
+                  :loading="loadingOrders"
+                >
+                  <el-option
+                    v-for="o in orders"
+                    :key="o.id"
+                    :label="`${o.petName || '未命名宠物'}｜${o.statusText || `状态${o.status}`}${o.orderNo ? `｜${o.orderNo}` : ''}`"
+                    :value="o.id"
+                  >
+                    <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px;">
+                      <div style="display:flex; flex-direction: column; gap: 2px; min-width: 0;">
+                        <div style="display:flex; align-items: center; gap: 8px; min-width: 0;">
+                          <span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ o.petName || '未命名宠物' }}
+                          </span>
+                          <el-tag size="small" type="info">{{ o.serviceTypeName }}</el-tag>
+                        </div>
+                        <div style="color:#909399; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                          {{ o.orderNo ? `订单号：${o.orderNo}` : `订单#${o.id}` }}
+                        </div>
+                      </div>
+                      <el-tag size="small" type="success">
+                        {{ o.statusText || `状态${o.status}` }}
+                      </el-tag>
+                    </div>
+                  </el-option>
+                </el-select>
+                <div class="form-tip" style="margin-top: 6px;">
+                  仅“已完成”的订单才能创建纪念册；若下拉为空，请先完成订单服务流程。
+                </div>
+              </el-form-item>
+            </el-col>
             <el-col :span="12">
               <el-form-item label="副标题" prop="subtitle">
                 <el-input
@@ -401,8 +440,8 @@
         >
           <template #extra>
             <div class="success-actions">
-              <el-button type="primary" size="large" @click="editMemorial">
-                开始编辑
+              <el-button type="primary" size="large" @click="viewCreatedMemorial">
+                查看纪念册
               </el-button>
               <el-button size="large" @click="viewMemorialList">
                 查看我的纪念册
@@ -426,6 +465,7 @@ import { Picture, Check, Plus } from "@element-plus/icons-vue";
 import { useMemorialStore } from "@/store/memorial";
 import { memorialApi, type TemplateVO } from "@/api/memorial";
 import request from "@/api/request";
+import { orderApi, type OrderVO } from "@/api/order";
 
 // 定义事件
 const emit = defineEmits<{
@@ -471,12 +511,35 @@ const memorialForm = reactive({
   orderId: null as number | null,
 });
 
+// 订单（仅已完成订单可创建纪念册）
+const orders = ref<OrderVO[]>([]);
+const loadingOrders = ref(false);
+const selectedOrder = computed(() => {
+  const id = memorialForm.orderId;
+  if (!id) return null;
+  return orders.value.find((o) => o.id === id) || null;
+});
+
+async function loadMyCompletedOrders() {
+  loadingOrders.value = true;
+  try {
+    const res = await orderApi.getOrderList({ pageNum: 1, pageSize: 50 });
+    const all = res.data?.records || [];
+    orders.value = all.filter((o: any) => o?.status === 3); // 3:已完成
+  } catch {
+    orders.value = [];
+  } finally {
+    loadingOrders.value = false;
+  }
+}
+
 // 表单验证规则
 const memorialRules = reactive({
   title: [
     { required: true, message: "请输入纪念册标题", trigger: "blur" },
     { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" },
   ],
+  orderId: [{ required: true, message: "请选择已完成订单", trigger: "change" }],
   petName: [{ required: true, message: "请输入宠物姓名", trigger: "blur" }],
   petType: [{ required: true, message: "请选择宠物类型", trigger: "change" }],
   petDeathDate: [
@@ -670,6 +733,16 @@ const createMemorial = async () => {
   try {
     submitting.value = true;
 
+    // 必须选择已完成订单
+    if (!memorialForm.orderId) {
+      ElMessage.warning("请先选择一个已完成订单");
+      return;
+    }
+    if (!selectedOrder.value || selectedOrder.value.status !== 3) {
+      ElMessage.warning("仅已完成订单可创建纪念册，请重新选择订单");
+      return;
+    }
+
     // 构建创建数据
     // 将日期字符串转换为包含时间的格式（yyyy-MM-ddTHH:mm:ss）
     const formatDateForBackend = (dateStr: string | null | undefined): string | undefined => {
@@ -711,12 +784,11 @@ const createMemorial = async () => {
   }
 };
 
-// 编辑纪念册
-const editMemorial = () => {
-  // 优先使用store中的currentMemorial，如果没有则从创建结果中获取
+// 查看已创建的纪念册（协作中心/预览页）
+const viewCreatedMemorial = () => {
   const memorialId = memorialStore.currentMemorial?.id;
   if (memorialId) {
-    router.push(`/memorial/edit/${memorialId}`);
+    router.push(`/memorial/preview/${memorialId}`);
   } else {
     ElMessage.warning("无法获取纪念册ID，请稍后重试");
   }
@@ -745,6 +817,9 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+
+  // 只加载已完成订单（用于创建纪念册）
+  loadMyCompletedOrders();
 });
 </script>
 

@@ -52,7 +52,7 @@
             :lg="6"
           >
             <el-card shadow="hover" class="card">
-              <div class="card-title" @click="openMemorial(m)">
+              <div class="card-title" @click="goPreview(m)">
                 {{ m.title }}
               </div>
               <div class="card-meta">
@@ -69,14 +69,6 @@
                 <span class="meta-item">关联订单：{{ m.orderId ? `#${m.orderId}` : "未关联" }}</span>
               </div>
               <div class="card-actions">
-                <el-button
-                  v-if="m.status === 0 || m.status === 1"
-                  type="primary"
-                  size="small"
-                  @click="goEdit(m)"
-                >
-                  编辑
-                </el-button>
                 <el-button
                   v-if="m.designStatus === 0"
                   type="warning"
@@ -156,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { memorialApi, type MemorialVO } from "@/api/memorial";
@@ -256,21 +248,21 @@ async function reload() {
   });
 }
 
+watch(
+  () => status.value,
+  async () => {
+    // 切换状态时应立即刷新列表，并回到第一页
+    memorialStore.pagination.current = 1;
+    await reload();
+  }
+);
+
 function goCreate() {
   router.push("/memorial/create");
 }
 
-function goEdit(m: MemorialVO) {
-  router.push(`/memorial/edit/${m.id}`);
-}
-
 function goPreview(m: MemorialVO) {
   router.push(`/memorial/preview/${m.id}`);
-}
-
-function openMemorial(m: MemorialVO) {
-  if (m.status === 0 || m.status === 1) goEdit(m);
-  else goPreview(m);
 }
 
 async function submitDesign(m: MemorialVO) {

@@ -229,11 +229,6 @@ const routes = [
         component: () => import("@/views/memorial/CreateMemorial.vue"),
       },
       {
-        path: "edit/:id",
-        name: "EditMemorial",
-        component: () => import("@/views/memorial/EditMemorial.vue"),
-      },
-      {
         path: "templates",
         name: "TemplateList",
         component: () => import("@/views/memorial/TemplateList.vue"),

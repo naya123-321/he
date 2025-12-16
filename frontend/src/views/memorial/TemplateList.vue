@@ -307,12 +307,12 @@
         <el-form-item label="关联订单" prop="orderId">
           <el-select
             v-model="createForm.orderId"
-            placeholder="请选择关联订单（可选）"
+            placeholder="请选择已完成订单（必选）"
           >
             <el-option
               v-for="order in userOrders"
               :key="order.id"
-              :label="`订单 #${order.id} - ${order.createTime}`"
+              :label="`${order.petName || '未命名宠物'}｜${order.statusText || `状态${order.status}`}${order.orderNo ? `｜${order.orderNo}` : ''}`"
               :value="order.id"
             />
           </el-select>
@@ -399,6 +399,7 @@ const createRules = {
     },
   ],
   petType: [{ required: true, message: "请选择宠物类型", trigger: "change" }],
+  orderId: [{ required: true, message: "请选择已完成订单", trigger: "change" }],
 };
 
 // 加载模板
@@ -519,11 +520,8 @@ const submitCreateForm = async () => {
     if (res.data.code === 200) {
       ElMessage.success("纪念册创建成功");
 
-      // 跳转到编辑页面
-      router.push({
-        path: "/memorial/edit",
-        query: { id: res.data.data.id },
-      });
+      // 跳转到协作中心/预览页
+      router.push(`/memorial/preview/${res.data.data.id}`);
     }
   } catch (error: any) {
     ElMessage.error(error.message || "创建失败");

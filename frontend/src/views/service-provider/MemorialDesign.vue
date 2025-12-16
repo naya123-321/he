@@ -124,7 +124,6 @@
         </el-card>
         
         <div class="design-tools">
-          <el-button type="primary" @click="openEditor">打开编辑器</el-button>
           <el-button @click="previewMemorial">预览纪念册</el-button>
         </div>
       </div>
@@ -161,12 +160,6 @@ const feedbackPdf = computed<string | null>(() => memorialInfo.value?.ownerFeedb
 
 const goBack = () => {
   router.back();
-};
-
-const openEditor = () => {
-  if (memorialInfo.value?.id) {
-    router.push(`/memorial/edit/${memorialInfo.value.id}`);
-  }
 };
 
 const previewMemorial = () => {
