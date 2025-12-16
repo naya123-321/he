@@ -448,6 +448,11 @@ const activeCategory = ref("all");
 const selectedTemplateId = ref<number | null>(null);
 // 选中的模板
 const selectedTemplate = ref<TemplateVO | null>(null);
+
+// 模板预览弹窗
+const previewDialogVisible = ref(false);
+const previewTemplate = ref<TemplateVO | null>(null);
+const previewImages = ref<string[]>([]);
 // 照片列表
 const photoList = ref<any[]>([]);
 
@@ -603,6 +608,18 @@ const selectTemplate = (template: TemplateVO) => {
   selectedTemplateId.value = template.id;
   selectedTemplate.value = template;
 };
+
+function openTemplatePreview(template: TemplateVO) {
+  previewTemplate.value = template;
+  previewImages.value = getTemplateImages(template);
+  previewDialogVisible.value = true;
+}
+
+function selectFromPreview() {
+  if (!previewTemplate.value) return;
+  selectTemplate(previewTemplate.value);
+  previewDialogVisible.value = false;
+}
 
 // 分类切换
 const handleCategoryChange = () => {
@@ -864,6 +881,20 @@ onMounted(async () => {
             justify-content: center;
             color: #fff;
             font-size: 18px;
+          }
+
+          .preview-badge {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.45);
+            color: #fff;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            user-select: none;
           }
         }
 
