@@ -245,6 +245,7 @@ export interface MemorialCreateDTO {
   petBirthDate?: string;
   petDeathDate?: string;
   petMemory?: string;
+  photoUrls?: string[];
 }
 
 export interface MemorialContentDTO {

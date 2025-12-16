@@ -115,7 +115,8 @@ const goToDesign = (id: number) => {
 
 // 查看详情
 const viewDetail = (id: number) => {
-  router.push(`/memorial/detail/${id}`);
+  // 预览/协作中心页面
+  router.push(`/memorial/preview/${id}`);
 };
 
 // 刷新列表

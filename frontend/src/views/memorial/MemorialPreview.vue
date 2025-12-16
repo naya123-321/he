@@ -128,12 +128,14 @@
 
         <el-divider v-if="shareUrl" />
         <div v-if="shareUrl" class="share">
-          <div class="share-title">分享链接（已审核通过且公开）</div>
-          <el-input v-model="shareUrl" readonly>
-            <template #append>
-              <el-button @click="copyShare">复制</el-button>
-            </template>
-          </el-input>
+          <div class="share-title">分享（已审核通过且公开）</div>
+          <div class="share-actions">
+            <el-button type="primary" @click="shareAndDownload">分享并下载</el-button>
+            <el-button @click="copyShare">复制链接</el-button>
+            <el-button v-if="finalPdf" @click="downloadUrl(finalPdf)">下载终稿PDF</el-button>
+          </div>
+          <el-input v-model="shareUrl" readonly />
+          <div class="tip">点击“分享并下载”会自动下载终稿PDF，你可以把下载的文件转发给别人。</div>
         </div>
       </el-card>
 
@@ -189,6 +191,7 @@ import { ElMessage, ElMessageBox, ElPageHeader } from 'element-plus';
 import type { UploadFile } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
 import { memorialApi, templateApi, type TemplateVO } from '@/api/memorial';
+import { jsPDF } from "jspdf";
 
 const router = useRouter();
 const route = useRoute();
@@ -205,6 +208,7 @@ const draftImages = computed<string[]>(() => memorialInfo.value?.designDraftImag
 const draftPdf = computed<string | null>(() => memorialInfo.value?.designDraftPdfUrl || null);
 const feedbackImages = computed<string[]>(() => memorialInfo.value?.ownerFeedbackImages || []);
 const feedbackPdf = computed<string | null>(() => memorialInfo.value?.ownerFeedbackPdfUrl || null);
+const finalPdf = computed<string | null>(() => memorialInfo.value?.designFinalPdfUrl || null);
 
 function parseTemplateImages(t: any): string[] {
   if (Array.isArray(t?.templateImages) && t.templateImages.length > 0) {
@@ -321,6 +325,83 @@ async function copyShare() {
   }
 }
 
+async function shareAndDownload() {
+  // “分享”按钮：按需求自动下载文件，用户可分享下载的文件
+  if (finalPdf.value) {
+    downloadUrl(finalPdf.value);
+    return;
+  }
+  // 没有 PDF 时：用终稿图片自动生成 PDF 下载
+  const imgs: string[] = Array.isArray(memorialInfo.value?.designFinalImages) ? memorialInfo.value.designFinalImages : [];
+  if (imgs.length > 0) {
+    try {
+      await generatePdfFromImagesAndDownload(imgs, `${memorialInfo.value?.title || "纪念册"}-终稿.pdf`);
+      return;
+    } catch (e: any) {
+      ElMessage.error(e?.message || "自动生成PDF失败");
+      // fallback：打开分享链接
+      if (shareUrl.value) openUrl(shareUrl.value);
+      return;
+    }
+  }
+  // fallback：打开分享链接
+  if (shareUrl.value) {
+    openUrl(shareUrl.value);
+    return;
+  }
+  ElMessage.warning("暂无可下载文件");
+}
+
+async function fetchImageAsDataUrl(url: string): Promise<{ dataUrl: string; width: number; height: number }> {
+  // 通过 fetch 拿 blob 再转 dataUrl，避免跨域导致 canvas/图片解析失败
+  const resp = await fetch(url, { mode: "cors" });
+  if (!resp.ok) throw new Error(`图片下载失败：${resp.status}`);
+  const blob = await resp.blob();
+  const dataUrl: string = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("读取图片失败"));
+    reader.readAsDataURL(blob);
+  });
+
+  // 读取图片尺寸
+  const img = new Image();
+  const size = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+    img.onload = () => resolve({ w: img.naturalWidth || img.width, h: img.naturalHeight || img.height });
+    img.onerror = () => reject(new Error("解析图片失败"));
+    img.src = dataUrl;
+  });
+
+  return { dataUrl, width: size.w, height: size.h };
+}
+
+async function generatePdfFromImagesAndDownload(imageUrls: string[], filename: string) {
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
+  for (let i = 0; i < imageUrls.length; i++) {
+    const { dataUrl, width, height } = await fetchImageAsDataUrl(imageUrls[i]);
+
+    // 按 A4 等比缩放铺满（留少量边距）
+    const margin = 24;
+    const maxW = pageW - margin * 2;
+    const maxH = pageH - margin * 2;
+    const ratio = Math.min(maxW / width, maxH / height);
+    const drawW = width * ratio;
+    const drawH = height * ratio;
+    const x = (pageW - drawW) / 2;
+    const y = (pageH - drawH) / 2;
+
+    // jsPDF 需要指定图片类型（根据 dataUrl 前缀判断）
+    const type = dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
+    doc.addImage(dataUrl, type as any, x, y, drawW, drawH);
+    if (i !== imageUrls.length - 1) doc.addPage();
+  }
+
+  doc.save(filename);
+}
+
 async function loadMemorial() {
   const id = route.params.id;
   if (!id) return;
@@ -421,6 +502,12 @@ onMounted(() => {
   }
 
   .share {
+    .share-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
     .share-title {
       font-weight: 700;
       margin-bottom: 8px;

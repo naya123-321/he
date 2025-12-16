@@ -142,7 +142,7 @@
           class="photo-uploader"
           :action="uploadAction"
           :headers="uploadHeaders"
-          :file-list="photoList"
+          v-model:file-list="photoList"
           :on-success="handleUploadSuccess"
           :on-remove="handleRemovePhoto"
           :before-upload="beforeUpload"
@@ -463,9 +463,10 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Picture, Check, Plus } from "@element-plus/icons-vue";
 import { useMemorialStore } from "@/store/memorial";
-import { memorialApi, type TemplateVO } from "@/api/memorial";
+import { memorialApi, type TemplateVO, type MemorialCreateDTO } from "@/api/memorial";
 import request from "@/api/request";
 import { orderApi, type OrderVO } from "@/api/order";
+import type { UploadFile } from "element-plus";
 
 // 定义事件
 const emit = defineEmits<{
@@ -494,7 +495,13 @@ const previewDialogVisible = ref(false);
 const previewTemplate = ref<TemplateVO | null>(null);
 const previewImages = ref<string[]>([]);
 // 照片列表
-const photoList = ref<any[]>([]);
+const photoList = ref<UploadFile[]>([]);
+
+const photoUrls = computed(() => {
+  return photoList.value
+    .map((f: any) => (f?.url as string) || "")
+    .filter(Boolean);
+});
 
 // 表单引用
 const memorialFormRef = ref();
@@ -709,11 +716,12 @@ const beforeUpload = (file: File) => {
 // 上传成功
 const handleUploadSuccess = (response: any, file: any) => {
   if (response && response.code === 200) {
-    photoList.value.push({
-      name: file.name,
-      url: response.data,
-      uid: file.uid,
-    });
+    // ElementPlus UploadFile：把后端返回的 URL 写回 file.url，列表由 v-model:file-list 维护
+    try {
+      file.url = response.data;
+    } catch {
+      // ignore
+    }
     ElMessage.success("照片上传成功");
   } else {
     ElMessage.error(response?.message || "上传失败");
@@ -753,7 +761,7 @@ const createMemorial = async () => {
       return `${dateStr}T00:00:00`;
     };
 
-    const createData = {
+    const createData: MemorialCreateDTO = {
       title: memorialForm.title,
       subtitle: memorialForm.subtitle,
       templateId: selectedTemplateId.value,
@@ -763,6 +771,7 @@ const createMemorial = async () => {
       petBirthDate: formatDateForBackend(memorialForm.petBirthDate),
       petDeathDate: formatDateForBackend(memorialForm.petDeathDate),
       petMemory: memorialForm.petMemory,
+      photoUrls: photoUrls.value,
     };
 
     const result = await memorialStore.createMemorial(createData);

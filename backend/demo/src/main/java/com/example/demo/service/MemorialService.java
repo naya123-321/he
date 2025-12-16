@@ -255,6 +255,10 @@ public class MemorialService {
         if (!memorial.getUserId().equals(userId)) {
             throw new RuntimeException("无权删除此纪念册");
         }
+        // 终稿审核通过后禁止删除（防止已发布/已分享内容被删除）
+        if (memorial.getDesignStatus() != null && memorial.getDesignStatus() == 60) {
+            throw new RuntimeException("终稿审核已通过，无法删除该纪念册");
+        }
         memorialRepository.delete(memorial);
         return true;
     }
@@ -458,6 +462,28 @@ public class MemorialService {
 
         if (memorial.getDesignStatus() == null || memorial.getDesignStatus() < 40) {
             throw new RuntimeException("宠主尚未确认最终版，无法提交管理员审核");
+        }
+
+        // 每个已完成订单只能有一个纪念册进入“终稿审核”流程
+        if (memorial.getOrderId() == null) {
+            throw new RuntimeException("纪念册未关联订单，无法提交管理员审核");
+        }
+        Order order = orderRepository.findById(memorial.getOrderId()).orElse(null);
+        if (order == null) {
+            throw new RuntimeException("关联订单不存在");
+        }
+        if (order.getStatus() == null || order.getStatus() != 3) {
+            throw new RuntimeException("订单未完成，无法提交终稿审核");
+        }
+        List<Memorial> sameOrder = memorialRepository.findByOrderId(memorial.getOrderId());
+        boolean hasOtherInReview = sameOrder.stream().anyMatch(m ->
+            m.getId() != null
+                && !m.getId().equals(memorialId)
+                && m.getDesignStatus() != null
+                && m.getDesignStatus() >= 50
+        );
+        if (hasOtherInReview) {
+            throw new RuntimeException("该订单已有纪念册提交终稿审核/已通过审核，无法重复提交");
         }
 
         try {

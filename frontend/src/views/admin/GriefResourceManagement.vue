@@ -92,11 +92,36 @@
         <el-form-item label="作者">
           <el-input v-model="formData.author" maxlength="50" />
         </el-form-item>
-        <el-form-item label="封面URL">
-          <el-input v-model="formData.coverImage" placeholder="可填写图片 URL" />
+        <el-form-item label="封面" prop="coverImage">
+          <div class="upload-row">
+            <el-upload
+              :action="uploadAction"
+              :headers="uploadHeaders"
+              :show-file-list="false"
+              accept="image/*"
+              :before-upload="beforeUploadCover"
+              :on-success="handleCoverUploadSuccess"
+            >
+              <el-button>上传封面</el-button>
+            </el-upload>
+            <el-input v-model="formData.coverImage" placeholder="可填写图片 URL" />
+          </div>
         </el-form-item>
-        <el-form-item label="文件URL">
-          <el-input v-model="formData.fileUrl" placeholder="视频可填写文件 URL" />
+        <el-form-item v-if="formData.type === 'video'" label="视频文件" prop="fileUrl">
+          <div class="upload-row">
+            <el-upload
+              :action="uploadAction"
+              :headers="uploadHeaders"
+              :show-file-list="false"
+              accept="video/*"
+              :before-upload="beforeUploadVideo"
+              :on-success="handleVideoUploadSuccess"
+            >
+              <el-button type="primary">上传视频</el-button>
+            </el-upload>
+            <el-input v-model="formData.fileUrl" placeholder="上传后自动填充，也可手动填写URL" />
+          </div>
+          <div class="form-tip">支持 mp4 等视频格式，单个视频建议不超过 200MB。</div>
         </el-form-item>
         <el-form-item label="内容">
           <el-input v-model="formData.content" type="textarea" :rows="8" />
@@ -198,9 +223,73 @@ const enabled = computed({
   },
 });
 
+const uploadAction = "/api/grief-resource/upload";
+const uploadHeaders = computed(() => {
+  const token = sessionStorage.getItem("token");
+  return {
+    Authorization: token ? `Bearer ${token}` : "",
+  };
+});
+
+function beforeUploadCover(file: File) {
+  if (!file.type.startsWith("image/")) {
+    ElMessage.error("只能上传图片文件");
+    return false;
+  }
+  const isLt10M = file.size / 1024 / 1024 < 10;
+  if (!isLt10M) {
+    ElMessage.error("封面图片不能超过 10MB");
+    return false;
+  }
+  return true;
+}
+
+function beforeUploadVideo(file: File) {
+  if (!file.type.startsWith("video/")) {
+    ElMessage.error("只能上传视频文件");
+    return false;
+  }
+  const isLt200M = file.size / 1024 / 1024 < 200;
+  if (!isLt200M) {
+    ElMessage.error("视频文件不能超过 200MB");
+    return false;
+  }
+  return true;
+}
+
+function handleCoverUploadSuccess(response: any) {
+  if (response?.code === 200) {
+    formData.coverImage = response.data;
+    ElMessage.success("封面上传成功");
+  } else {
+    ElMessage.error(response?.message || "封面上传失败");
+  }
+}
+
+function handleVideoUploadSuccess(response: any) {
+  if (response?.code === 200) {
+    formData.fileUrl = response.data;
+    ElMessage.success("视频上传成功");
+  } else {
+    ElMessage.error(response?.message || "视频上传失败");
+  }
+}
+
 const formRules = {
   type: [{ required: true, message: "请选择类型", trigger: "change" }],
   title: [{ required: true, message: "请输入标题", trigger: "blur" }],
+  fileUrl: [
+    {
+      validator: (_: any, value: any, cb: any) => {
+        if (formData.type === "video" && (!value || String(value).trim() === "")) {
+          cb(new Error("请上传视频文件或填写文件URL"));
+          return;
+        }
+        cb();
+      },
+      trigger: "blur",
+    },
+  ],
 };
 
 function goBack() {
@@ -415,6 +504,26 @@ loadResources();
         word-break: break-word;
       }
     }
+  }
+
+  .upload-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+
+    :deep(.el-upload) {
+      flex-shrink: 0;
+    }
+
+    :deep(.el-input) {
+      flex: 1;
+    }
+  }
+
+  .form-tip {
+    margin-top: 6px;
+    color: #909399;
+    font-size: 12px;
   }
 }
 </style>

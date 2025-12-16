@@ -97,6 +97,7 @@
                   查看
                 </el-button>
                 <el-button
+                  v-if="m.designStatus !== 60"
                   type="danger"
                   plain
                   size="small"
