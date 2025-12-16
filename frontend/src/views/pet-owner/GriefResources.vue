@@ -3,58 +3,27 @@
     <el-page-header @back="goBack" content="哀伤支持资源" />
 
     <div class="content-wrapper">
-      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
-        <el-tab-pane label="文章" name="article">
-          <div v-loading="loading" class="resources-list">
-            <div
-              v-for="item in articles"
-              :key="item.id"
-              class="resource-item"
-              @click="openDetail(item.id)"
-            >
-              <div v-if="item.coverImage" class="resource-cover">
-                <img :src="item.coverImage" alt="封面" />
-              </div>
-              <div class="resource-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.summary || item.content || "暂无描述" }}</p>
-                <div class="resource-meta">
-                  <span v-if="item.author" class="author">{{ item.author }}</span>
-                  <span class="date">{{ formatDate(item.createTime) }}</span>
-                </div>
-              </div>
-            </div>
-            <el-empty v-if="!loading && articles.length === 0" description="暂无文章资源" :image-size="150" />
+      <div v-loading="loading" class="resources-list">
+        <div
+          v-for="item in articles"
+          :key="item.id"
+          class="resource-item"
+          @click="openDetail(item.id)"
+        >
+          <div v-if="item.coverImage" class="resource-cover">
+            <img :src="item.coverImage" alt="封面" />
           </div>
-        </el-tab-pane>
-
-        <el-tab-pane label="视频" name="video">
-          <div v-loading="loading" class="resources-list">
-            <div
-              v-for="item in videos"
-              :key="item.id"
-              class="resource-item"
-              @click="openDetail(item.id)"
-            >
-              <div v-if="item.coverImage" class="resource-cover">
-                <img :src="item.coverImage" alt="封面" />
-                <div class="play-icon">
-                  <el-icon><VideoPlay /></el-icon>
-                </div>
-              </div>
-              <div class="resource-content">
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.summary || item.content || "暂无描述" }}</p>
-                <div class="resource-meta">
-                  <span v-if="item.author" class="author">{{ item.author }}</span>
-                  <span class="date">{{ formatDate(item.createTime) }}</span>
-                </div>
-              </div>
+          <div class="resource-content">
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.summary || item.content || "暂无描述" }}</p>
+            <div class="resource-meta">
+              <span v-if="item.author" class="author">{{ item.author }}</span>
+              <span class="date">{{ formatDate(item.createTime) }}</span>
             </div>
-            <el-empty v-if="!loading && videos.length === 0" description="暂无视频资源" :image-size="150" />
           </div>
-        </el-tab-pane>
-      </el-tabs>
+        </div>
+        <el-empty v-if="!loading && articles.length === 0" description="暂无文章资源" :image-size="150" />
+      </div>
     </div>
 
     <el-dialog
@@ -72,35 +41,7 @@
           {{ detail.summary }}
         </div>
 
-        <div v-if="detail.type === 'video' && detail.fileUrl" class="video-player">
-          <!-- 某些“疗愈音乐”可能是音频型 mp4：loadedmetadata 时 videoWidth=0，此时自动切换为 audio 播放 -->
-          <video
-            v-if="!audioOnly"
-            ref="videoRef"
-            :src="detail.fileUrl"
-            controls
-            preload="metadata"
-            playsinline
-            :poster="detail.coverImage || ''"
-            style="width: 100%; height: 420px; background: #000; border-radius: 10px"
-            @loadedmetadata="handleVideoMeta"
-            @error="handleMediaError"
-          />
-          <audio
-            v-else
-            :src="detail.fileUrl"
-            controls
-            style="width: 100%"
-            @error="handleMediaError"
-          />
-          <div class="media-tip">
-            若无法播放，可
-            <a :href="detail.fileUrl" target="_blank" rel="noreferrer">打开文件</a>
-            查看/下载。
-          </div>
-        </div>
-
-        <div v-else class="detail-content">
+        <div class="detail-content">
           <div v-if="detail.content" style="white-space: pre-wrap">
             {{ detail.content }}
           </div>
@@ -124,23 +65,18 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { VideoPlay } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import { griefResourceApi, type GriefResourceVO } from "@/api/griefResource";
 
 const router = useRouter();
 
-const activeTab = ref<"article" | "video">("article");
 const loading = ref(false);
 const list = ref<GriefResourceVO[]>([]);
 
 const detailDialogVisible = ref(false);
 const detail = ref<GriefResourceVO | null>(null);
-const videoRef = ref<HTMLVideoElement | null>(null);
-const audioOnly = ref(false);
 
 const articles = computed(() => list.value.filter((r) => r.type === "article"));
-const videos = computed(() => list.value.filter((r) => r.type === "video"));
 
 function goBack() {
   router.back();
@@ -154,7 +90,8 @@ async function load(type?: string) {
   loading.value = true;
   try {
     const res = await griefResourceApi.getEnabledGriefResources(type);
-    list.value = res.data || [];
+    // 宠主端只展示文章资源
+    list.value = (res.data || []).filter((r: any) => r?.type === "article");
   } catch (e: any) {
     // request.ts 已提示，这里只兜底
     list.value = [];
@@ -164,17 +101,10 @@ async function load(type?: string) {
   }
 }
 
-function handleTabChange(name: string | number) {
-  const t = String(name);
-  activeTab.value = t === "video" ? "video" : "article";
-  load(activeTab.value);
-}
-
 async function openDetail(id: number) {
   try {
     const res = await griefResourceApi.getGriefResourceDetail(id);
     detail.value = res.data;
-    audioOnly.value = false;
     detailDialogVisible.value = true;
   } catch (e: any) {
     ElMessage.error(e?.message || "获取详情失败");
@@ -183,25 +113,10 @@ async function openDetail(id: number) {
 
 function handleCloseDetail() {
   detail.value = null;
-  audioOnly.value = false;
-  videoRef.value = null;
-}
-
-function handleVideoMeta() {
-  const v = videoRef.value;
-  if (!v) return;
-  // audio-only mp4 会出现 0x0
-  if ((v.videoWidth || 0) === 0 && (v.videoHeight || 0) === 0) {
-    audioOnly.value = true;
-  }
-}
-
-function handleMediaError() {
-  ElMessage.error("媒体加载失败，请检查文件URL或稍后重试");
 }
 
 onMounted(() => {
-  load(activeTab.value);
+  load("article");
 });
 </script>
 
@@ -330,19 +245,6 @@ onMounted(() => {
       line-height: 1.8;
       color: #303133;
       font-size: 15px;
-    }
-
-    .video-player {
-      margin-bottom: 12px;
-    }
-
-    .media-tip {
-      margin-top: 8px;
-      color: #909399;
-      font-size: 12px;
-      a {
-        color: #409eff;
-      }
     }
 
     .detail-meta {

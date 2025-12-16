@@ -16,12 +16,6 @@
 
       <el-card shadow="hover" class="filter-card">
         <el-form :inline="true" :model="filterForm">
-          <el-form-item label="类型">
-            <el-select v-model="filterForm.type" placeholder="全部" clearable style="width: 140px">
-              <el-option label="文章" value="article" />
-              <el-option label="视频" value="video" />
-            </el-select>
-          </el-form-item>
           <el-form-item label="状态">
             <el-select v-model="filterForm.status" placeholder="全部" clearable style="width: 140px">
               <el-option label="启用" :value="1" />
@@ -77,12 +71,7 @@
 
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="820px" @close="handleDialogClose">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="110px">
-        <el-form-item label="类型" prop="type">
-          <el-select v-model="formData.type" style="width: 240px">
-            <el-option label="文章" value="article" />
-            <el-option label="视频" value="video" />
-          </el-select>
-        </el-form-item>
+        <!-- 仅保留文章资源：类型固定为“文章”，不再显示下拉 -->
         <el-form-item label="标题" prop="title">
           <el-input v-model="formData.title" maxlength="100" show-word-limit />
         </el-form-item>
@@ -91,37 +80,6 @@
         </el-form-item>
         <el-form-item label="作者">
           <el-input v-model="formData.author" maxlength="50" />
-        </el-form-item>
-        <el-form-item label="封面" prop="coverImage">
-          <div class="upload-row">
-            <el-upload
-              :action="uploadAction"
-              :headers="uploadHeaders"
-              :show-file-list="false"
-              accept="image/*"
-              :before-upload="beforeUploadCover"
-              :on-success="handleCoverUploadSuccess"
-            >
-              <el-button>上传封面</el-button>
-            </el-upload>
-            <el-input v-model="formData.coverImage" placeholder="可填写图片 URL" />
-          </div>
-        </el-form-item>
-        <el-form-item v-if="formData.type === 'video'" label="视频文件" prop="fileUrl">
-          <div class="upload-row">
-            <el-upload
-              :action="uploadAction"
-              :headers="uploadHeaders"
-              :show-file-list="false"
-              accept="video/*"
-              :before-upload="beforeUploadVideo"
-              :on-success="handleVideoUploadSuccess"
-            >
-              <el-button type="primary">上传视频</el-button>
-            </el-upload>
-            <el-input v-model="formData.fileUrl" placeholder="上传后自动填充，也可手动填写URL" />
-          </div>
-          <div class="form-tip">支持 mp4 等视频格式，单个视频建议不超过 200MB。</div>
         </el-form-item>
         <el-form-item label="内容">
           <el-input v-model="formData.content" type="textarea" :rows="8" />
@@ -146,18 +104,9 @@
           <span v-if="detail.author">作者：{{ detail.author }}</span>
           <span>创建：{{ detail.createTime }}</span>
         </div>
-        <div v-if="detail.coverImage" class="detail-cover">
-          <img :src="detail.coverImage" alt="封面" />
-        </div>
         <div v-if="detail.summary" class="detail-block">
           <div class="label">摘要</div>
           <div class="value">{{ detail.summary }}</div>
-        </div>
-        <div v-if="detail.fileUrl" class="detail-block">
-          <div class="label">文件URL</div>
-          <div class="value">
-            <a :href="detail.fileUrl" target="_blank" rel="noreferrer">{{ detail.fileUrl }}</a>
-          </div>
         </div>
         <div v-if="detail.content" class="detail-block">
           <div class="label">内容</div>
@@ -189,7 +138,6 @@ const submitting = ref(false);
 const resourceList = ref<GriefResourceVO[]>([]);
 
 const filterForm = reactive({
-  type: undefined as string | undefined,
   status: undefined as number | undefined,
 });
 
@@ -209,7 +157,6 @@ const formData = reactive<GriefResourceCreateDTO>({
   summary: "",
   type: "article",
   content: "",
-  fileUrl: "",
   coverImage: "",
   author: "",
   status: 1,
@@ -223,73 +170,8 @@ const enabled = computed({
   },
 });
 
-const uploadAction = "/api/grief-resource/upload";
-const uploadHeaders = computed(() => {
-  const token = sessionStorage.getItem("token");
-  return {
-    Authorization: token ? `Bearer ${token}` : "",
-  };
-});
-
-function beforeUploadCover(file: File) {
-  if (!file.type.startsWith("image/")) {
-    ElMessage.error("只能上传图片文件");
-    return false;
-  }
-  const isLt10M = file.size / 1024 / 1024 < 10;
-  if (!isLt10M) {
-    ElMessage.error("封面图片不能超过 10MB");
-    return false;
-  }
-  return true;
-}
-
-function beforeUploadVideo(file: File) {
-  if (!file.type.startsWith("video/")) {
-    ElMessage.error("只能上传视频文件");
-    return false;
-  }
-  const isLt200M = file.size / 1024 / 1024 < 200;
-  if (!isLt200M) {
-    ElMessage.error("视频文件不能超过 200MB");
-    return false;
-  }
-  return true;
-}
-
-function handleCoverUploadSuccess(response: any) {
-  if (response?.code === 200) {
-    formData.coverImage = response.data;
-    ElMessage.success("封面上传成功");
-  } else {
-    ElMessage.error(response?.message || "封面上传失败");
-  }
-}
-
-function handleVideoUploadSuccess(response: any) {
-  if (response?.code === 200) {
-    formData.fileUrl = response.data;
-    ElMessage.success("视频上传成功");
-  } else {
-    ElMessage.error(response?.message || "视频上传失败");
-  }
-}
-
 const formRules = {
-  type: [{ required: true, message: "请选择类型", trigger: "change" }],
   title: [{ required: true, message: "请输入标题", trigger: "blur" }],
-  fileUrl: [
-    {
-      validator: (_: any, value: any, cb: any) => {
-        if (formData.type === "video" && (!value || String(value).trim() === "")) {
-          cb(new Error("请上传视频文件或填写文件URL"));
-          return;
-        }
-        cb();
-      },
-      trigger: "blur",
-    },
-  ],
 };
 
 function goBack() {
@@ -300,12 +182,13 @@ async function loadResources() {
   loading.value = true;
   try {
     const res = await griefResourceApi.getGriefResourceList({
-      type: filterForm.type,
+      // 仅展示文章资源
+      type: "article",
       status: filterForm.status,
       pageNum: pagination.current,
       pageSize: pagination.pageSize,
     });
-    resourceList.value = res.data?.records || [];
+    resourceList.value = (res.data?.records || []).filter((r: any) => r?.type === "article");
     pagination.total = res.data?.total || 0;
   } catch (e: any) {
     resourceList.value = [];
@@ -322,7 +205,6 @@ function resetToFirstPageAndLoad() {
 }
 
 function resetFilter() {
-  filterForm.type = undefined;
   filterForm.status = undefined;
   resetToFirstPageAndLoad();
 }
@@ -346,7 +228,6 @@ function openCreate() {
     summary: "",
     type: "article",
     content: "",
-    fileUrl: "",
     coverImage: "",
     author: "",
     status: 1,
@@ -361,9 +242,9 @@ function openEdit(row: GriefResourceVO) {
   Object.assign(formData, {
     title: row.title || "",
     summary: row.summary || "",
-    type: row.type || "article",
+    // 固定为文章（若历史数据为 video，这里也统一按文章编辑）
+    type: "article",
     content: row.content || "",
-    fileUrl: row.fileUrl || "",
     coverImage: row.coverImage || "",
     author: row.author || "",
     status: row.status ?? 1,

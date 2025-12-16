@@ -76,8 +76,8 @@
                 </div>
                 <div class="status-info">
                   <div class="status-label">预约时间</div>
-                  <div class="status-value">{{ currentOrder.appointmentTime || "未设置" }}</div>
-                  <div class="status-desc">下单时间：{{ currentOrder.createTime }}</div>
+                  <div class="status-value">{{ formatDateTime(currentOrder.appointmentTime) || "未设置" }}</div>
+                  <div class="status-desc">下单时间：{{ formatDateTime(currentOrder.createTime) }}</div>
                 </div>
               </div>
             </el-card>
@@ -128,10 +128,10 @@
 
         <el-descriptions :column="2" border>
           <el-descriptions-item label="服务套餐">
-            {{ currentOrder.serviceTypeName }}（￥{{ currentOrder.servicePrice }}）
-          </el-descriptions-item>
-          <el-descriptions-item label="支付状态">
-            {{ currentOrder.paymentStatusText }}
+            <span>
+              {{ currentOrder.serviceTypeName }}
+              <span v-if="currentOrder.servicePrice != null">（￥{{ currentOrder.servicePrice }}）</span>
+            </span>
           </el-descriptions-item>
           <el-descriptions-item label="宠物信息">
             {{ currentOrder.petName }} / {{ currentOrder.petType }}
@@ -391,9 +391,22 @@ const activeStep = computed(() => {
   if (s <= 0) return 0;
   if (s === 1) return 1;
   if (s === 2) return 2;
-  if (s === 3) return 3;
+  // 已完成时让所有步骤都处于完成态（最后一步也显示绿色对勾）
+  if (s === 3) return 4;
   return 0;
 });
+
+function formatDateTime(v: any) {
+  if (!v) return "";
+  const s = String(v);
+  // 兼容后端 ISO 格式（含 T）
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  return s.replace("T", " ");
+}
 
 function goBack() {
   router.back();
