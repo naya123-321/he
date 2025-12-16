@@ -39,7 +39,7 @@
           <el-option label="温馨风格" value="warm" />
           <el-option label="经典风格" value="classic" />
           <el-option label="现代风格" value="modern" />
-          <el-option label="复古风格" value="vintage" />
+          <el-option label="清新风格" value="vintage" />
           <el-option label="文艺风格" value="literary" />
           <el-option label="其他" value="other" />
         </el-select>
@@ -62,10 +62,16 @@
           <el-image
             v-if="row.previewImage"
             :src="row.previewImage"
-            :preview-src-list="(row.templateImages && row.templateImages.length > 0) ? row.templateImages : [row.previewImage]"
             fit="cover"
-            style="width: 80px; height: 80px; border-radius: 4px"
-          />
+            style="width: 80px; height: 80px; border-radius: 4px; cursor: pointer"
+            @click="openPreview(row)"
+          >
+            <template #error>
+              <div style="width: 80px; height: 80px; display:flex; align-items:center; justify-content:center; color:#909399;">
+                加载失败
+              </div>
+            </template>
+          </el-image>
           <span v-else style="color: #999">无预览图</span>
         </template>
       </el-table-column>
@@ -120,6 +126,25 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 图片预览弹窗（点击缩略图放大） -->
+    <el-dialog v-model="previewDialogVisible" :title="previewTitle" width="920px">
+      <el-empty v-if="previewImages.length === 0" description="暂无模板图片" />
+      <el-carousel v-else height="520px" indicator-position="outside">
+        <el-carousel-item v-for="(url, idx) in previewImages" :key="url">
+          <el-image
+            :src="url"
+            fit="contain"
+            style="width: 100%; height: 520px"
+            :preview-src-list="previewImages"
+            :initial-index="idx"
+          />
+        </el-carousel-item>
+      </el-carousel>
+      <template #footer>
+        <el-button @click="previewDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -155,6 +180,23 @@ const formData = reactive<TemplateCreateDTO>({
   layoutConfig: "",
 });
 const editingId = ref<number | null>(null);
+
+// 预览弹窗
+const previewDialogVisible = ref(false);
+const previewTitle = ref("模板图片预览");
+const previewImages = ref<string[]>([]);
+
+function openPreview(row: TemplateVO) {
+  const imgs =
+    (row as any)?.templateImages && Array.isArray((row as any).templateImages) && (row as any).templateImages.length > 0
+      ? (row as any).templateImages
+      : row.previewImage
+        ? [row.previewImage]
+        : [];
+  previewImages.value = imgs.filter(Boolean);
+  previewTitle.value = `模板图片预览：${row.name || ""}`.trim();
+  previewDialogVisible.value = true;
+}
 
 // 返回
 const goBack = () => {

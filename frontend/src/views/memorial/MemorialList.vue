@@ -140,7 +140,7 @@
             <el-option
               v-for="o in orders"
               :key="o.id"
-              :label="`订单#${o.id} ${o.orderNo || ''}（${o.petName || ''}）`"
+              :label="`${o.petName || '未命名宠物'}｜${o.statusText || `状态${o.status}`}${o.orderNo ? `｜${o.orderNo}` : ''}`"
               :value="o.id"
             />
           </el-select>

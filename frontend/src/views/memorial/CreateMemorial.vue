@@ -32,7 +32,7 @@
           <el-tab-pane label="温馨风格" name="warm" />
           <el-tab-pane label="经典风格" name="classic" />
           <el-tab-pane label="现代风格" name="modern" />
-          <el-tab-pane label="复古风格" name="vintage" />
+          <el-tab-pane label="清新风格" name="vintage" />
           <el-tab-pane label="文艺风格" name="literary" />
           <el-tab-pane label="其他" name="other" />
         </el-tabs>
@@ -45,10 +45,15 @@
           :key="template.id"
           class="template-card"
           :class="{ selected: selectedTemplateId === template.id }"
-          @click="handleTemplateClick(template)"
+          @click="selectTemplate(template)"
         >
           <div class="template-preview">
-            <img v-if="getTemplateCover(template)" :src="getTemplateCover(template)" :alt="template.name" />
+            <img
+              v-if="getTemplateCover(template)"
+              :src="getTemplateCover(template)!"
+              :alt="template.name"
+              @click.stop="openTemplatePreview(template)"
+            />
             <div v-else class="template-placeholder">
               <el-icon :size="60"><Picture /></el-icon>
               <span>暂无预览</span>
@@ -56,12 +61,15 @@
             <div v-if="selectedTemplateId === template.id" class="selected-badge">
               <el-icon><Check /></el-icon>
             </div>
+            <div class="preview-badge" @click.stop="openTemplatePreview(template)">预览</div>
           </div>
           <div class="template-info">
             <h4>{{ template.name }}</h4>
             <p>{{ template.description || '精美的纪念册模板' }}</p>
             <div class="template-footer">
-              <el-tag type="info" size="small">{{ template.categoryText || getCategoryText(template.category) }}</el-tag>
+              <el-tag type="info" size="small">
+                {{ template.categoryText || getCategoryText(template.category) }}
+              </el-tag>
               <el-tag v-if="getTemplateImages(template).length > 0" type="success" size="small">
                 {{ getTemplateImages(template).length }} 张
               </el-tag>
@@ -96,7 +104,6 @@
           </div>
 
           <el-empty v-if="previewImages.length === 0" description="暂无模板图片" />
-
           <el-carousel v-else height="520px" indicator-position="outside">
             <el-carousel-item v-for="(url, idx) in previewImages" :key="url">
               <el-image
@@ -135,7 +142,7 @@
           class="photo-uploader"
           :action="uploadAction"
           :headers="uploadHeaders"
-          v-model:file-list="photoList"
+          :file-list="photoList"
           :on-success="handleUploadSuccess"
           :on-remove="handleRemovePhoto"
           :before-upload="beforeUpload"
@@ -210,34 +217,6 @@
           label-width="120px"
           class="memorial-form"
         >
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="关联订单" prop="orderId">
-                <el-select
-                  v-model="memorialForm.orderId"
-                  placeholder="请选择订单（不选则无法提交设计）"
-                  clearable
-                  filterable
-                  style="width: 100%"
-                  :loading="loadingOrders"
-                >
-                  <el-option
-                    v-for="o in orders"
-                    :key="o.id"
-                    :label="`订单#${o.id} ${o.orderNo || ''}（${o.petName || ''}）`"
-                    :value="o.id"
-                  >
-                    <div style="display:flex; justify-content: space-between; gap: 12px;">
-                      <span>订单#{{ o.id }} {{ o.orderNo }}</span>
-                      <span style="color:#909399;">{{ o.createTime ? new Date(o.createTime).toLocaleString('zh-CN') : '' }}</span>
-                    </div>
-                  </el-option>
-                </el-select>
-                <div class="form-tip">关联订单后，才可以在“我的纪念册”里提交到服务端设计。</div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="副标题" prop="subtitle">
@@ -447,8 +426,6 @@ import { Picture, Check, Plus } from "@element-plus/icons-vue";
 import { useMemorialStore } from "@/store/memorial";
 import { memorialApi, type TemplateVO } from "@/api/memorial";
 import request from "@/api/request";
-import type { UploadFile } from "element-plus";
-import { orderApi, type OrderVO } from "@/api/order";
 
 // 定义事件
 const emit = defineEmits<{
@@ -471,8 +448,8 @@ const activeCategory = ref("all");
 const selectedTemplateId = ref<number | null>(null);
 // 选中的模板
 const selectedTemplate = ref<TemplateVO | null>(null);
-// 照片列表（ElementPlus UploadFile）
-const photoList = ref<UploadFile[]>([]);
+// 照片列表
+const photoList = ref<any[]>([]);
 
 // 表单引用
 const memorialFormRef = ref();
@@ -488,22 +465,6 @@ const memorialForm = reactive({
   petMemory: "",
   orderId: null as number | null,
 });
-
-// 订单列表（用于关联订单）
-const orders = ref<OrderVO[]>([]);
-const loadingOrders = ref(false);
-
-async function loadMyOrders() {
-  loadingOrders.value = true;
-  try {
-    const res = await orderApi.getOrderList({ pageNum: 1, pageSize: 50 });
-    orders.value = res.data?.records || [];
-  } catch {
-    orders.value = [];
-  } finally {
-    loadingOrders.value = false;
-  }
-}
 
 // 表单验证规则
 const memorialRules = reactive({
@@ -521,10 +482,8 @@ const memorialRules = reactive({
 // 上传配置
 const uploadAction = computed(() => {
   if (memorialStore.currentMemorial?.id) {
-    // 通过后端 /api 前缀访问上传接口
     return `/api/memorial/upload-image/${memorialStore.currentMemorial.id}`;
   }
-  // 未创建纪念册前，先上传到 temp 目录
   return "/api/memorial/upload-image/temp";
 });
 
@@ -544,6 +503,45 @@ const filteredTemplates = computed(() => {
     (t) => t.category === activeCategory.value
   );
 });
+
+function getCategoryText(category?: string) {
+  const map: Record<string, string> = {
+    simple: "简约风格",
+    warm: "温馨风格",
+    classic: "经典风格",
+    modern: "现代风格",
+    vintage: "清新风格",
+    literary: "文艺风格",
+    other: "其他",
+  };
+  if (!category) return "其他";
+  return map[category] || "其他";
+}
+
+function getTemplateImages(template: any): string[] {
+  // 优先使用后端直接返回的 templateImages
+  if (Array.isArray(template?.templateImages) && template.templateImages.length > 0) {
+    return template.templateImages.filter(Boolean);
+  }
+  // 兼容：从 styleConfig 中解析 templateImages
+  if (template?.styleConfig) {
+    try {
+      const parsed = JSON.parse(template.styleConfig);
+      const imgs = parsed?.templateImages;
+      if (Array.isArray(imgs) && imgs.length > 0) return imgs.filter(Boolean);
+    } catch {
+      // ignore
+    }
+  }
+  // 兼容：仅有 previewImage
+  if (template?.previewImage) return [template.previewImage];
+  return [];
+}
+
+function getTemplateCover(template: any): string | null {
+  const imgs = getTemplateImages(template);
+  return imgs.length > 0 ? imgs[0] : (template?.previewImage || null);
+}
 
 // 获取宠物类型名称
 const getPetTypeName = (type: string) => {
@@ -612,68 +610,6 @@ const handleCategoryChange = () => {
   selectedTemplate.value = null;
 };
 
-function getCategoryText(category?: string) {
-  if (!category) return "其他";
-  const map: Record<string, string> = {
-    simple: "简约风格",
-    warm: "温馨风格",
-    classic: "经典风格",
-    modern: "现代风格",
-    vintage: "复古风格",
-    literary: "文艺风格",
-    other: "其他",
-    all: "全部",
-  };
-  return map[category] || "其他";
-}
-
-function getTemplateImages(template: TemplateVO): string[] {
-  if (template.templateImages && template.templateImages.length > 0) return template.templateImages;
-  if (template.previewImage) return [template.previewImage];
-  // 兜底：从 styleConfig 里解析（兼容极端情况下后端未返回 templateImages）
-  if (template.styleConfig) {
-    try {
-      const parsed = JSON.parse(template.styleConfig);
-      const images = parsed?.templateImages;
-      if (Array.isArray(images)) {
-        return images.filter((x: any) => typeof x === "string" && x.trim().length > 0);
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return [];
-}
-
-function getTemplateCover(template: TemplateVO): string {
-  return template.previewImage || getTemplateImages(template)[0] || "";
-}
-
-// 模板预览弹窗：点击模板即可查看图片
-const previewDialogVisible = ref(false);
-const previewTemplate = ref<TemplateVO | null>(null);
-const previewImages = computed(() => {
-  if (!previewTemplate.value) return [];
-  return getTemplateImages(previewTemplate.value);
-});
-
-function openPreview(template: TemplateVO) {
-  previewTemplate.value = template;
-  previewDialogVisible.value = true;
-}
-
-function handleTemplateClick(template: TemplateVO) {
-  // 保持“点击模板即预览”的交互，同时也默认选中，方便直接下一步
-  selectTemplate(template);
-  openPreview(template);
-}
-
-function selectFromPreview() {
-  if (!previewTemplate.value) return;
-  selectTemplate(previewTemplate.value);
-  previewDialogVisible.value = false;
-}
-
 // 上传前验证
 const beforeUpload = (file: File) => {
   const isImage = file.type.startsWith("image/");
@@ -690,14 +626,16 @@ const beforeUpload = (file: File) => {
   return true;
 };
 
-// 上传成功：使用 v-model:file-list，由 Upload 组件维护列表，这里只回填 url
-const handleUploadSuccess = (response: any, uploadFile: any) => {
+// 上传成功
+const handleUploadSuccess = (response: any, file: any) => {
   if (response && response.code === 200) {
-    uploadFile.url = response.data;
-    uploadFile.status = "success";
+    photoList.value.push({
+      name: file.name,
+      url: response.data,
+      uid: file.uid,
+    });
     ElMessage.success("照片上传成功");
   } else {
-    uploadFile.status = "fail";
     ElMessage.error(response?.message || "上传失败");
   }
 };
@@ -735,9 +673,6 @@ const createMemorial = async () => {
       petBirthDate: formatDateForBackend(memorialForm.petBirthDate),
       petDeathDate: formatDateForBackend(memorialForm.petDeathDate),
       petMemory: memorialForm.petMemory,
-      photoUrls: photoList.value
-        .filter((f) => (f as any)?.status === "success" && (f as any)?.url)
-        .map((f) => (f as any).url as string),
     };
 
     const result = await memorialStore.createMemorial(createData);
@@ -793,9 +728,6 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
-
-  // 加载订单列表（用于关联订单）
-  loadMyOrders();
 });
 </script>
 
@@ -961,7 +893,6 @@ onMounted(async () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 8px;
 
             .price {
               font-weight: bold;
@@ -970,35 +901,6 @@ onMounted(async () => {
             }
           }
         }
-      }
-    }
-
-    .template-preview-dialog {
-      .dialog-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 12px;
-      }
-
-      .title-area {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 0;
-      }
-
-      .name {
-        font-size: 16px;
-        font-weight: 700;
-        color: #303133;
-      }
-
-      .desc {
-        font-size: 13px;
-        color: #909399;
-        word-break: break-word;
       }
     }
 
@@ -1095,13 +997,6 @@ onMounted(async () => {
         flex-wrap: wrap;
       }
     }
-  }
-
-  .form-tip {
-    margin-top: 6px;
-    color: #909399;
-    font-size: 12px;
-    line-height: 1.4;
   }
 }
 

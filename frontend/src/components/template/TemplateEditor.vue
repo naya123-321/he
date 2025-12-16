@@ -16,7 +16,7 @@
           <el-option label="温馨风格" value="warm" />
           <el-option label="经典风格" value="classic" />
           <el-option label="现代风格" value="modern" />
-          <el-option label="复古风格" value="vintage" />
+        <el-option label="清新风格" value="vintage" />
           <el-option label="文艺风格" value="literary" />
           <el-option label="其他" value="other" />
         </el-select>

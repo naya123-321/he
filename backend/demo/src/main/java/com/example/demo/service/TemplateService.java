@@ -192,7 +192,7 @@ public class TemplateService {
             case "warm": return "温馨风格";
             case "classic": return "经典风格";
             case "modern": return "现代风格";
-            case "vintage": return "复古风格";
+            case "vintage": return "清新风格";
             case "literary": return "文艺风格";
             case "other": return "其他";
             default: return "其他";

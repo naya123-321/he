@@ -112,14 +112,6 @@
         </div>
       </el-card>
 
-      <MemorialPreviewComponent
-        v-model="previewVisible"
-        :memorial-info="memorialInfo"
-        :pages="pages"
-        :elements="elements"
-        @export="handleExport"
-      />
-
       <!-- 宠主回传修改稿 -->
       <el-dialog v-model="feedbackDialogVisible" title="上传修改稿（多图 / PDF）" width="760px" @close="resetFeedbackForm">
         <el-form label-width="110px">
@@ -171,15 +163,11 @@ import { useRouter, useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox, ElPageHeader } from 'element-plus';
 import type { UploadFile } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
-import MemorialPreviewComponent from '@/components/memorial/MemorialPreview.vue';
 import { memorialApi } from '@/api/memorial';
 
 const router = useRouter();
 const route = useRoute();
-const previewVisible = ref(true);
 const memorialInfo = ref<any>(null);
-const pages = ref<any[]>([]);
-const elements = ref<any[]>([]);
 const feedbackDialogVisible = ref(false);
 const uploadingFeedback = ref(false);
 const feedbackImageList = ref<UploadFile[]>([]);
@@ -204,10 +192,6 @@ const canConfirmFinal = computed(() => {
 
 const goBack = () => {
   router.back();
-};
-
-const handleExport = (type: string) => {
-  // TODO: 处理导出
 };
 
 function openUrl(url: string) {
@@ -294,9 +278,6 @@ async function loadMemorial() {
   if (!id) return;
   const res = await memorialApi.getMemorialDetail(Number(id));
   memorialInfo.value = res.data;
-  const pc: any = (res.data as any)?.previewContent;
-  pages.value = Array.isArray(pc?.pages) ? pc.pages : [];
-  elements.value = Array.isArray(pc?.elements) ? pc.elements : [];
 
   // 分享链接：管理员已通过且公开
   if (res.data?.shareToken && res.data?.isPublic && res.data?.designStatus === 60) {
