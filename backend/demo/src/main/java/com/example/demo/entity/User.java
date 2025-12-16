@@ -28,6 +28,12 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @Column(length = 255)
+    private String securityQuestion;
+
+    @Column(length = 255)
+    private String securityAnswerHash;
+
     @Column(columnDefinition = "TEXT")
     private String avatar;
 
@@ -107,6 +113,22 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getSecurityQuestion() {
+        return securityQuestion;
+    }
+
+    public void setSecurityQuestion(String securityQuestion) {
+        this.securityQuestion = securityQuestion;
+    }
+
+    public String getSecurityAnswerHash() {
+        return securityAnswerHash;
+    }
+
+    public void setSecurityAnswerHash(String securityAnswerHash) {
+        this.securityAnswerHash = securityAnswerHash;
     }
 
     public String getAvatar() {

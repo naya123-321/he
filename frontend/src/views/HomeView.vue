@@ -421,8 +421,8 @@ const scrollToSection = (sectionId: string) => {
   }
 };
 
-// 导航到订单创建页面
-const goToPackage = (packageType: string) => {
+// 导航到套餐页面（宠主端：跳转到“服务套餐”页，避免进入旧的预约/创建订单界面）
+const goToPackage = (_packageType: string) => {
   // 检查用户是否已登录
   const token = sessionStorage.getItem("token");
   if (!token) {
@@ -432,8 +432,25 @@ const goToPackage = (packageType: string) => {
     return;
   }
 
-  // 已登录，跳转到订单创建页面，并传递套餐类型参数
-  router.push({ name: "CreateOrder", query: { type: packageType } });
+  // 已登录：宠主端直接跳到服务套餐页
+  if (userStore.userRole === 0) {
+    router.push("/pet-owner/service-packages");
+    return;
+  }
+
+  // 其他角色不需要“选择套餐”，跳回各自首页/工作台
+  if (userStore.userRole === 1) {
+    ElMessage.info("当前角色无需选择套餐");
+    router.push("/service-provider/appointment-list");
+    return;
+  }
+  if (userStore.userRole === 2) {
+    ElMessage.info("当前角色无需选择套餐");
+    router.push("/admin/dashboard");
+    return;
+  }
+
+  ElMessage.info("当前角色无需选择套餐");
 };
 </script>
 

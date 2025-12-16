@@ -53,6 +53,19 @@ public class AuthController {
     }
 
     /**
+     * 获取密保问题（找回密码用）
+     */
+    @GetMapping("/security-question")
+    public Result<String> getSecurityQuestion(@RequestParam String username) {
+        try {
+            String question = userService.getSecurityQuestion(username);
+            return Result.success(question);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 获取用户信息
      */
     @GetMapping("/user-info")
@@ -62,6 +75,23 @@ public class AuthController {
             Long userId = parseUserIdFromToken(token);
             UserVO userVO = userService.getUserInfo(userId);
             return Result.success(userVO);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 设置/更新当前登录用户的密保信息
+     */
+    @PutMapping("/user/security")
+    public Result<Boolean> updateSecurityInfo(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestBody RegisterDTO dto
+    ) {
+        try {
+            Long userId = parseUserIdFromToken(token);
+            boolean success = userService.updateSecurityInfo(userId, dto.getSecurityQuestion(), dto.getSecurityAnswer());
+            return Result.success(success);
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
@@ -104,7 +134,29 @@ public class AuthController {
     @PostMapping("/reset-password")
     public Result<Boolean> resetPassword(@RequestBody RegisterDTO dto) {
         try {
-            boolean success = userService.resetPassword(dto.getUsername(), dto.getPassword());
+            // 兼容前端可能传 newPassword 字段
+            String newPassword = dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()
+                    ? dto.getNewPassword()
+                    : dto.getPassword();
+            boolean success = userService.resetPassword(dto.getUsername(), newPassword);
+            return Result.success(success);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 通过密保重置密码
+     */
+    @PostMapping("/reset-password-by-security")
+    public Result<Boolean> resetPasswordBySecurity(@RequestBody RegisterDTO dto) {
+        try {
+            boolean success = userService.resetPasswordBySecurity(
+                    dto.getUsername(),
+                    dto.getSecurityQuestion(),
+                    dto.getSecurityAnswer(),
+                    dto.getNewPassword() != null && !dto.getNewPassword().isEmpty() ? dto.getNewPassword() : dto.getPassword()
+            );
             return Result.success(success);
         } catch (Exception e) {
             return Result.error(e.getMessage());

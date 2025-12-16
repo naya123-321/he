@@ -1,18 +1,10 @@
 <template>
   <div class="register-container">
-    <div class="register-image">
-      <div class="image-content">
-        <h2>用爱守护</h2>
-        <h3>最后的陪伴</h3>
-        <p>专业温馨的宠物殡葬服务<br />让每一次告别都充满尊严与爱</p>
-        <div class="client-count">
-          <span>已服务家庭</span>
-          <span class="count">10,000+</span>
-        </div>
-      </div>
-    </div>
     <div class="register-box">
       <div class="register-header">
+        <div class="back-home">
+          <el-button link type="primary" @click="goHome">返回首页</el-button>
+        </div>
         <h2>用户注册</h2>
       </div>
 
@@ -80,6 +72,32 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item prop="securityQuestion">
+          <el-select
+            v-model="registerForm.securityQuestion"
+            placeholder="请选择密保问题"
+            size="large"
+            class="custom-select"
+          >
+            <el-option label="您最喜欢的宠物名字是？" value="您最喜欢的宠物名字是？" />
+            <el-option label="您最喜欢的城市是？" value="您最喜欢的城市是？" />
+            <el-option label="您小学班主任的名字是？" value="您小学班主任的名字是？" />
+            <el-option label="您最喜欢的颜色是？" value="您最喜欢的颜色是？" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item prop="securityAnswer">
+          <el-input
+            v-model="registerForm.securityAnswer"
+            placeholder="请输入密保答案"
+            prefix-icon="Key"
+            size="large"
+            class="custom-input"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+
         <el-form-item class="agreement">
           <el-checkbox v-model="registerForm.agree" class="agreement-checkbox">
             我已阅读并同意<a href="#" class="agreement-link">用户服务协议</a
@@ -134,6 +152,8 @@ const registerForm = reactive({
   confirmPassword: "",
   phone: "",
   role: null as number | null,
+  securityQuestion: "",
+  securityAnswer: "",
   agree: false,
 });
 
@@ -203,6 +223,8 @@ const registerRules = {
     },
   ],
   role: [{ required: true, message: "请选择角色", trigger: "change" }],
+  securityQuestion: [{ required: true, message: "请选择密保问题", trigger: "change" }],
+  securityAnswer: [{ required: true, message: "请输入密保答案", trigger: "blur" }],
   agree: [
     {
       required: true,
@@ -272,6 +294,10 @@ const handleRegister = async () => {
     loading.value = false;
   }
 };
+
+const goHome = () => {
+  router.push("/");
+};
 </script>
 
 <style scoped lang="scss">
@@ -281,69 +307,12 @@ const handleRegister = async () => {
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  overflow: hidden;
-  max-width: 1200px;
-  margin: 0 auto;
-
-  .register-image {
-    flex: 0 0 50%;
-    background-image: url("@/assets/images/pet-hero.svg");
-    background-size: cover;
-    background-position: center;
-    background-color: #f5f7fa;
-    position: relative;
-
-    .image-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #333;
-      text-align: center;
-
-      h2 {
-        font-size: 36px;
-        margin-bottom: 10px;
-        color: #333;
-      }
-
-      h3 {
-        font-size: 28px;
-        margin-bottom: 20px;
-        color: #333;
-      }
-
-      p {
-        font-size: 16px;
-        line-height: 1.6;
-        margin-bottom: 30px;
-        color: #666;
-      }
-
-      .client-count {
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 10px 20px;
-        border-radius: 20px;
-        display: inline-block;
-
-        span {
-          display: block;
-          font-size: 14px;
-          color: #666;
-        }
-
-        .count {
-          font-size: 24px;
-          font-weight: bold;
-          color: #333;
-        }
-      }
-    }
-  }
+  padding: 24px;
+  background: #f5f7fa;
 
   .register-box {
-    flex: 0 0 40%;
-    max-width: 450px;
+    width: 100%;
+    max-width: 520px;
     padding: 12px;
     margin: 10px auto;
     background: white;
@@ -353,8 +322,15 @@ const handleRegister = async () => {
     flex-direction: column;
 
     .register-header {
+      position: relative;
       text-align: center;
       margin-bottom: 40px;
+
+      .back-home {
+        position: absolute;
+        left: 0;
+        top: -6px;
+      }
 
       h2 {
         margin: 0;
@@ -472,13 +448,6 @@ const handleRegister = async () => {
 
 @media (max-width: 992px) {
   .register-container {
-    flex-direction: column;
-
-    .register-image {
-      width: 100%;
-      height: 300px;
-    }
-
     .register-box {
       width: 100%;
       box-shadow: none;

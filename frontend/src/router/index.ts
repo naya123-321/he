@@ -195,11 +195,6 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
-        path: "create",
-        name: "CreateOrder",
-        component: () => import("@/views/order/CreateOrder.vue"),
-      },
-      {
         path: "list",
         name: "OrderList",
         component: () => import("@/views/order/OrderList.vue"),

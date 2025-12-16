@@ -49,7 +49,33 @@ export const verifyEmailCode = (email: string, code: string) => {
 export const resetPassword = (username: string, newPassword: string) => {
   return request.post<ApiResponse<boolean>>("/auth/reset-password", {
     username,
-    newPassword,
+    // 后端当前读取的是 password 字段，这里做兼容
+    password: newPassword,
+  });
+};
+
+// 获取密保问题
+export const getSecurityQuestion = (username: string) => {
+  return request.get<ApiResponse<string>>(
+    `/auth/security-question?username=${encodeURIComponent(username)}`
+  );
+};
+
+// 通过密保重置密码
+export const resetPasswordBySecurity = (data: {
+  username: string;
+  securityQuestion: string;
+  securityAnswer: string;
+  newPassword: string;
+}) => {
+  return request.post<ApiResponse<boolean>>("/auth/reset-password-by-security", data);
+};
+
+// 登录用户设置/更新密保信息
+export const updateSecurityInfo = (securityQuestion: string, securityAnswer: string) => {
+  return request.put<ApiResponse<boolean>>("/auth/user/security", {
+    securityQuestion,
+    securityAnswer,
   });
 };
 
@@ -105,6 +131,8 @@ export interface RegisterDTO {
   email?: string;
   phone?: string;
   role?: number;
+  securityQuestion?: string;
+  securityAnswer?: string;
 }
 
 export interface UpdateUserInfoDTO {

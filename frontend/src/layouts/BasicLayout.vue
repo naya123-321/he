@@ -14,6 +14,7 @@
           >
             <!-- 宠主端菜单 -->
             <template v-if="userStore.userRole === 0">
+              <el-menu-item index="/home">首页</el-menu-item>
               <el-menu-item index="/pet-owner/service-packages">服务套餐</el-menu-item>
               <el-menu-item index="/pet-owner/book-service">预约服务</el-menu-item>
               <el-menu-item index="/pet-owner/service-progress">服务进度</el-menu-item>
@@ -49,7 +50,6 @@
               <el-menu-item index="/home">首页</el-menu-item>
               <el-menu-item index="/memorial/list">纪念册</el-menu-item>
               <el-menu-item index="/order/list">订单管理</el-menu-item>
-              <el-menu-item index="/order/create">创建订单</el-menu-item>
             </template>
           </el-menu>
           <div class="user-info">

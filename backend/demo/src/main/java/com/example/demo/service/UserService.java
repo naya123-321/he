@@ -49,12 +49,18 @@ public class UserService {
         if (userRepository.existsByUsername(registerDTO.getUsername())) {
             throw new RuntimeException("用户名已存在");
         }
+        if (registerDTO.getSecurityQuestion() == null || registerDTO.getSecurityQuestion().trim().isEmpty()
+                || registerDTO.getSecurityAnswer() == null || registerDTO.getSecurityAnswer().trim().isEmpty()) {
+            throw new RuntimeException("请设置密保问题和密保答案");
+        }
         User user = new User();
         user.setUsername(registerDTO.getUsername());
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setEmail(registerDTO.getEmail());
         user.setPhone(registerDTO.getPhone());
         user.setRole(registerDTO.getRole() != null ? registerDTO.getRole() : 0);
+        user.setSecurityQuestion(registerDTO.getSecurityQuestion().trim());
+        user.setSecurityAnswerHash(passwordEncoder.encode(registerDTO.getSecurityAnswer().trim()));
         userRepository.save(user);
         return true;
     }
@@ -114,6 +120,67 @@ public class UserService {
         }
         User user = userOpt.get();
         user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return true;
+    }
+
+    /**
+     * 获取密保问题
+     */
+    public String getSecurityQuestion(String username) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("用户不存在");
+        }
+        User user = userOpt.get();
+        if (user.getSecurityQuestion() == null || user.getSecurityQuestion().isEmpty()) {
+            throw new RuntimeException("该账号未设置密保问题");
+        }
+        return user.getSecurityQuestion();
+    }
+
+    /**
+     * 通过密保重置密码
+     */
+    public boolean resetPasswordBySecurity(String username, String securityQuestion, String securityAnswer, String newPassword) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("用户不存在");
+        }
+        User user = userOpt.get();
+        if (user.getSecurityQuestion() == null || user.getSecurityQuestion().isEmpty() ||
+                user.getSecurityAnswerHash() == null || user.getSecurityAnswerHash().isEmpty()) {
+            throw new RuntimeException("该账号未设置密保信息");
+        }
+        if (securityQuestion == null || securityQuestion.isEmpty() || !securityQuestion.equals(user.getSecurityQuestion())) {
+            throw new RuntimeException("密保问题不匹配");
+        }
+        if (securityAnswer == null || securityAnswer.isEmpty() || !passwordEncoder.matches(securityAnswer, user.getSecurityAnswerHash())) {
+            throw new RuntimeException("密保答案错误");
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new RuntimeException("新密码长度不能小于6位");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return true;
+    }
+
+    /**
+     * 用户设置/更新密保信息（需登录）
+     */
+    public boolean updateSecurityInfo(Long userId, String securityQuestion, String securityAnswer) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("用户不存在");
+        }
+        if (securityQuestion == null || securityQuestion.trim().isEmpty()
+                || securityAnswer == null || securityAnswer.trim().isEmpty()) {
+            throw new RuntimeException("密保问题和密保答案不能为空");
+        }
+        User user = userOpt.get();
+        user.setSecurityQuestion(securityQuestion.trim());
+        user.setSecurityAnswerHash(passwordEncoder.encode(securityAnswer.trim()));
         userRepository.save(user);
         return true;
     }

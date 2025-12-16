@@ -1,18 +1,10 @@
 <template>
   <div class="login-container">
-    <div class="login-image">
-      <div class="image-content">
-        <h2>用爱守护</h2>
-        <h3>最后的陪伴</h3>
-        <p>专业温馨的宠物殡葬服务<br />让每一次告别都充满尊严与爱</p>
-        <div class="client-count">
-          <span>已服务家庭</span>
-          <span class="count">10,000+</span>
-        </div>
-      </div>
-    </div>
     <div class="login-box">
       <div class="login-header">
+        <div class="back-home">
+          <el-button link type="primary" @click="goHome">返回首页</el-button>
+        </div>
         <h2>用户登录</h2>
       </div>
 
@@ -198,6 +190,10 @@ const handleLogin = async () => {
     loading.value = false;
   }
 };
+
+const goHome = () => {
+  router.push("/");
+};
 </script>
 
 <style scoped lang="scss">
@@ -206,71 +202,13 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  overflow: hidden;
-  max-width: 1200px;
-  margin: 0 auto;
-
-  .login-image {
-    flex: 0 0 50%;
-    background-image: url("@/assets/images/pet-hero.svg");
-    background-size: cover;
-    background-position: center;
-    background-color: #f5f7fa;
-    position: relative;
-
-    .image-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #333;
-      text-align: center;
-      padding: 20px;
-      max-width: 80%;
-
-      h2 {
-        font-size: 36px;
-        margin-bottom: 10px;
-        color: #333;
-      }
-
-      h3 {
-        font-size: 28px;
-        margin-bottom: 20px;
-        color: #333;
-      }
-
-      p {
-        font-size: 16px;
-        line-height: 1.6;
-        margin-bottom: 30px;
-        color: #666;
-      }
-
-      .client-count {
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 10px 20px;
-        border-radius: 20px;
-        display: inline-block;
-
-        span {
-          display: block;
-          font-size: 14px;
-          color: #666;
-        }
-
-        .count {
-          font-size: 24px;
-          font-weight: bold;
-          color: #333;
-        }
-      }
-    }
-  }
+  width: 100%;
+  padding: 24px;
+  background: #f5f7fa;
 
   .login-box {
-    flex: 0 0 40%;
-    max-width: 450px;
+    width: 100%;
+    max-width: 520px;
     padding: 12px;
     margin: 10px auto;
     min-width: 0;
@@ -281,8 +219,15 @@ const handleLogin = async () => {
     flex-direction: column;
 
     .login-header {
+      position: relative;
       text-align: center;
       margin-bottom: 40px;
+
+      .back-home {
+        position: absolute;
+        left: 0;
+        top: -6px;
+      }
 
       h2 {
         margin: 0;
@@ -401,13 +346,6 @@ const handleLogin = async () => {
 
 @media (max-width: 992px) {
   .login-container {
-    flex-direction: column;
-
-    .login-image {
-      width: 100%;
-      height: 300px;
-    }
-
     .login-box {
       width: 100%;
       box-shadow: none;

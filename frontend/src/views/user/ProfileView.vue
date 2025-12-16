@@ -162,6 +162,49 @@
         </el-col>
       </el-row>
 
+      <el-row :gutter="20" style="margin-top: 20px">
+        <el-col :span="24">
+          <el-card class="password-card">
+            <template #header>
+              <div class="card-header">
+                <span>密保设置</span>
+              </div>
+            </template>
+
+            <el-form
+              ref="securityFormRef"
+              :model="securityForm"
+              :rules="securityRules"
+              label-width="110px"
+            >
+              <el-form-item label="密保问题" prop="securityQuestion">
+                <el-select v-model="securityForm.securityQuestion" placeholder="请选择密保问题" style="width: 100%">
+                  <el-option label="您最喜欢的宠物名字是？" value="您最喜欢的宠物名字是？" />
+                  <el-option label="您最喜欢的城市是？" value="您最喜欢的城市是？" />
+                  <el-option label="您小学班主任的名字是？" value="您小学班主任的名字是？" />
+                  <el-option label="您最喜欢的颜色是？" value="您最喜欢的颜色是？" />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item label="密保答案" prop="securityAnswer">
+                <el-input
+                  v-model="securityForm.securityAnswer"
+                  placeholder="请输入密保答案"
+                  maxlength="50"
+                  show-word-limit
+                />
+              </el-form-item>
+
+              <el-form-item>
+                <el-button type="primary" :loading="savingSecurity" @click="saveSecurity">
+                  保存密保
+                </el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+        </el-col>
+      </el-row>
+
       <!-- 头像上传对话框 -->
       <el-dialog
         v-model="avatarDialogVisible"
@@ -203,7 +246,7 @@ import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from "@/store/user";
-import { updateUserInfo, changePassword } from "@/api/user";
+import { updateUserInfo, changePassword, updateSecurityInfo } from "@/api/user";
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -233,6 +276,7 @@ const changingPassword = ref(false);
 // 表单引用
 const profileFormRef = ref();
 const passwordFormRef = ref();
+const securityFormRef = ref();
 
 // 个人资料表单
 const profileForm = reactive({
@@ -251,6 +295,14 @@ const passwordForm = reactive({
   newPassword: "",
   confirmPassword: "",
 });
+
+// 密保表单
+const securityForm = reactive({
+  securityQuestion: "",
+  securityAnswer: "",
+});
+
+const savingSecurity = ref(false);
 
 // 个人资料验证规则
 const profileRules = reactive({
@@ -294,6 +346,11 @@ const passwordRules = reactive({
       trigger: "blur",
     },
   ],
+});
+
+const securityRules = reactive({
+  securityQuestion: [{ required: true, message: "请选择密保问题", trigger: "change" }],
+  securityAnswer: [{ required: true, message: "请输入密保答案", trigger: "blur" }],
 });
 
 // 返回上一页
@@ -483,6 +540,23 @@ const saveProfile = async () => {
     ElMessage.error("更新个人资料失败，请稍后重试");
   } finally {
     saving.value = false;
+  }
+};
+
+// 保存密保
+const saveSecurity = async () => {
+  if (!securityFormRef.value) return;
+  const valid = await securityFormRef.value.validate();
+  if (!valid) return;
+  try {
+    savingSecurity.value = true;
+    await updateSecurityInfo(securityForm.securityQuestion, securityForm.securityAnswer);
+    ElMessage.success("密保设置成功");
+    securityForm.securityAnswer = "";
+  } catch (e: any) {
+    // 错误提示交给 axios 拦截器统一处理
+  } finally {
+    savingSecurity.value = false;
   }
 };
 
