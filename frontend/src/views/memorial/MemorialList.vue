@@ -62,6 +62,12 @@
               <div class="card-meta">
                 <span class="meta-item">状态：{{ m.statusText || statusText(m.status) }}</span>
                 </div>
+              <div class="card-meta">
+                <span class="meta-item">设计协作：{{ m.designStatusText || "-" }}</span>
+              </div>
+              <div class="card-meta">
+                <span class="meta-item">关联订单：{{ m.orderId ? `#${m.orderId}` : "未关联" }}</span>
+              </div>
               <div class="card-actions">
                 <el-button
                   v-if="m.status === 0 || m.status === 1"
@@ -70,6 +76,30 @@
                   @click="goEdit(m)"
                 >
                   编辑
+                </el-button>
+                <el-button
+                  v-if="m.designStatus === 0"
+                  type="warning"
+                  size="small"
+                  @click="submitDesign(m)"
+                >
+                  提交设计
+                </el-button>
+                <el-button
+                  v-if="m.designStatus === 0 && !m.orderId"
+                  type="info"
+                  size="small"
+                  @click="openBindOrder(m)"
+                >
+                  关联订单
+                </el-button>
+                <el-button
+                  v-if="m.designStatus === 20 || m.designStatus === 30"
+                  type="success"
+                  size="small"
+                  @click="openDesignPreview(m)"
+                >
+                  查看设计稿
                 </el-button>
                 <el-button v-else type="success" size="small" @click="goPreview(m)">
                   查看
@@ -101,6 +131,27 @@
         />
                   </div>
     </el-card>
+
+    <!-- 关联订单弹窗 -->
+    <el-dialog v-model="bindDialogVisible" title="关联订单" width="620px" @close="resetBindDialog">
+      <el-form label-width="110px">
+        <el-form-item label="选择订单">
+          <el-select v-model="selectedOrderId" filterable clearable style="width: 100%" :loading="loadingOrders">
+            <el-option
+              v-for="o in orders"
+              :key="o.id"
+              :label="`订单#${o.id} ${o.orderNo || ''}（${o.petName || ''}）`"
+              :value="o.id"
+            />
+          </el-select>
+          <div class="tip">关联订单后才能提交设计；订单必须是你自己的订单。</div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="bindDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="binding" @click="bindOrder">确定关联</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -110,6 +161,7 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { memorialApi, type MemorialVO } from "@/api/memorial";
 import { useMemorialStore } from "@/store/memorial";
+import { orderApi, type OrderVO } from "@/api/order";
 
 const router = useRouter();
 const memorialStore = useMemorialStore();
@@ -120,6 +172,56 @@ const pagination = computed(() => memorialStore.pagination);
 
 const status = ref<"all" | "0" | "1" | "2" | "3">("all");
 const keyword = ref("");
+
+// 关联订单
+const bindDialogVisible = ref(false);
+const binding = ref(false);
+const bindingMemorialId = ref<number | null>(null);
+const orders = ref<OrderVO[]>([]);
+const loadingOrders = ref(false);
+const selectedOrderId = ref<number | null>(null);
+
+async function loadMyOrders() {
+  loadingOrders.value = true;
+  try {
+    const res = await orderApi.getOrderList({ pageNum: 1, pageSize: 50 });
+    orders.value = res.data?.records || [];
+  } catch {
+    orders.value = [];
+  } finally {
+    loadingOrders.value = false;
+  }
+}
+
+function openBindOrder(m: MemorialVO) {
+  bindingMemorialId.value = m.id;
+  selectedOrderId.value = (m.orderId as any) ?? null;
+  bindDialogVisible.value = true;
+}
+
+function resetBindDialog() {
+  bindingMemorialId.value = null;
+  selectedOrderId.value = null;
+}
+
+async function bindOrder() {
+  if (!bindingMemorialId.value) return;
+  if (!selectedOrderId.value) {
+    ElMessage.warning("请选择订单");
+    return;
+  }
+  binding.value = true;
+  try {
+    await memorialApi.bindOrder(bindingMemorialId.value, selectedOrderId.value);
+    ElMessage.success("关联成功");
+    bindDialogVisible.value = false;
+    await reload();
+  } catch (e: any) {
+    ElMessage.error(e?.message || "关联失败");
+  } finally {
+    binding.value = false;
+  }
+}
 
 const statusOptions = [
   { label: "全部", value: "all" },
@@ -171,6 +273,29 @@ function openMemorial(m: MemorialVO) {
   else goPreview(m);
 }
 
+async function submitDesign(m: MemorialVO) {
+  try {
+    await ElMessageBox.confirm(
+      "确定提交到服务端设计吗？提交后服务人员将开始制作设计稿。",
+      "提交确认",
+      {
+        type: "warning",
+        confirmButtonText: "确定提交",
+        cancelButtonText: "取消",
+      }
+    );
+    await memorialApi.submitForDesign(m.id);
+    ElMessage.success("已提交到服务端设计");
+    await reload();
+  } catch (e: any) {
+    if (e?.message) ElMessage.error(e.message);
+  }
+}
+
+function openDesignPreview(m: MemorialVO) {
+  router.push(`/memorial/preview/${m.id}`);
+}
+
 async function remove(m: MemorialVO) {
   try {
     await ElMessageBox.confirm(
@@ -208,6 +333,7 @@ function handleSizeChange(size: number) {
 
 onMounted(() => {
   reload();
+  loadMyOrders();
 });
 </script>
 
@@ -288,6 +414,13 @@ onMounted(() => {
   margin-top: 12px;
       display: flex;
       justify-content: flex-end;
+}
+
+.tip {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>
 

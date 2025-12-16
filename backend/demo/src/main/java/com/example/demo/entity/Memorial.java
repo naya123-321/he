@@ -50,6 +50,90 @@ public class Memorial {
     @Column(columnDefinition = "TEXT")
     private String styleConfig; // JSON格式的样式配置
 
+    /**
+     * 宠主上传的宠物照片URL列表（JSON数组字符串）
+     */
+    @Column(columnDefinition = "TEXT")
+    private String petPhotoUrls;
+
+    /**
+     * 设计协作状态
+     * 0:草稿(未提交设计) 10:已提交服务端设计 20:服务端已回传设计稿 30:宠主已回传修改意见
+     * 40:宠主已确认最终版 50:服务端已提交管理员审核 60:管理员已通过 61:管理员已拒绝
+     */
+    private Integer designStatus = 0;
+
+    /**
+     * 指派的服务人员ID（若订单有关联，可从订单带入）
+     */
+    private Long designProviderId;
+
+    /**
+     * 服务端回传的设计稿（图片URL JSON数组）
+     */
+    @Column(columnDefinition = "TEXT")
+    private String designDraftImages;
+
+    /**
+     * 服务端回传的设计稿PDF
+     */
+    @Column(length = 255)
+    private String designDraftPdfUrl;
+
+    /**
+     * 宠主回传的修改稿（图片URL JSON数组）
+     */
+    @Column(columnDefinition = "TEXT")
+    private String ownerFeedbackImages;
+
+    /**
+     * 宠主回传的修改稿PDF
+     */
+    @Column(length = 255)
+    private String ownerFeedbackPdfUrl;
+
+    /**
+     * 服务端最终版（图片URL JSON数组）
+     */
+    @Column(columnDefinition = "TEXT")
+    private String designFinalImages;
+
+    /**
+     * 服务端最终版PDF
+     */
+    @Column(length = 255)
+    private String designFinalPdfUrl;
+
+    /**
+     * 设计沟通备注（可选）
+     */
+    @Column(columnDefinition = "TEXT")
+    private String designMessage;
+
+    /**
+     * 设计状态更新时间
+     */
+    private LocalDateTime designUpdateTime;
+
+    /**
+     * 管理员审核信息
+     */
+    private LocalDateTime adminReviewTime;
+
+    @Column(length = 500)
+    private String adminReviewComment;
+
+    /**
+     * 是否公开可分享
+     */
+    private Boolean isPublic = false;
+
+    /**
+     * 分享token（简化分享链接使用）
+     */
+    @Column(length = 64)
+    private String shareToken;
+
     private Integer viewCount = 0;
 
     private Integer likeCount = 0;
@@ -195,6 +279,126 @@ public class Memorial {
 
     public void setStyleConfig(String styleConfig) {
         this.styleConfig = styleConfig;
+    }
+
+    public String getPetPhotoUrls() {
+        return petPhotoUrls;
+    }
+
+    public void setPetPhotoUrls(String petPhotoUrls) {
+        this.petPhotoUrls = petPhotoUrls;
+    }
+
+    public Integer getDesignStatus() {
+        return designStatus;
+    }
+
+    public void setDesignStatus(Integer designStatus) {
+        this.designStatus = designStatus;
+    }
+
+    public Long getDesignProviderId() {
+        return designProviderId;
+    }
+
+    public void setDesignProviderId(Long designProviderId) {
+        this.designProviderId = designProviderId;
+    }
+
+    public String getDesignDraftImages() {
+        return designDraftImages;
+    }
+
+    public void setDesignDraftImages(String designDraftImages) {
+        this.designDraftImages = designDraftImages;
+    }
+
+    public String getDesignDraftPdfUrl() {
+        return designDraftPdfUrl;
+    }
+
+    public void setDesignDraftPdfUrl(String designDraftPdfUrl) {
+        this.designDraftPdfUrl = designDraftPdfUrl;
+    }
+
+    public String getOwnerFeedbackImages() {
+        return ownerFeedbackImages;
+    }
+
+    public void setOwnerFeedbackImages(String ownerFeedbackImages) {
+        this.ownerFeedbackImages = ownerFeedbackImages;
+    }
+
+    public String getOwnerFeedbackPdfUrl() {
+        return ownerFeedbackPdfUrl;
+    }
+
+    public void setOwnerFeedbackPdfUrl(String ownerFeedbackPdfUrl) {
+        this.ownerFeedbackPdfUrl = ownerFeedbackPdfUrl;
+    }
+
+    public String getDesignFinalImages() {
+        return designFinalImages;
+    }
+
+    public void setDesignFinalImages(String designFinalImages) {
+        this.designFinalImages = designFinalImages;
+    }
+
+    public String getDesignFinalPdfUrl() {
+        return designFinalPdfUrl;
+    }
+
+    public void setDesignFinalPdfUrl(String designFinalPdfUrl) {
+        this.designFinalPdfUrl = designFinalPdfUrl;
+    }
+
+    public String getDesignMessage() {
+        return designMessage;
+    }
+
+    public void setDesignMessage(String designMessage) {
+        this.designMessage = designMessage;
+    }
+
+    public LocalDateTime getDesignUpdateTime() {
+        return designUpdateTime;
+    }
+
+    public void setDesignUpdateTime(LocalDateTime designUpdateTime) {
+        this.designUpdateTime = designUpdateTime;
+    }
+
+    public LocalDateTime getAdminReviewTime() {
+        return adminReviewTime;
+    }
+
+    public void setAdminReviewTime(LocalDateTime adminReviewTime) {
+        this.adminReviewTime = adminReviewTime;
+    }
+
+    public String getAdminReviewComment() {
+        return adminReviewComment;
+    }
+
+    public void setAdminReviewComment(String adminReviewComment) {
+        this.adminReviewComment = adminReviewComment;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    public String getShareToken() {
+        return shareToken;
+    }
+
+    public void setShareToken(String shareToken) {
+        this.shareToken = shareToken;
     }
 
     public Integer getViewCount() {

@@ -1,6 +1,7 @@
 package com.example.demo.vo;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class MemorialVO {
     private Long id;
@@ -31,6 +32,37 @@ public class MemorialVO {
     private LocalDateTime publishTime;
     private LocalDateTime createTime;
     private Object previewContent;
+
+    /**
+     * 关联订单ID（用于设计协作分配服务人员）
+     */
+    private Long orderId;
+
+    // ===== 设计协作相关 =====
+    private Integer designStatus;
+    private String designStatusText;
+    private Long designProviderId;
+    private String designProviderName;
+
+    private List<String> petPhotoUrls;
+
+    private List<String> designDraftImages;
+    private String designDraftPdfUrl;
+
+    private List<String> ownerFeedbackImages;
+    private String ownerFeedbackPdfUrl;
+
+    private List<String> designFinalImages;
+    private String designFinalPdfUrl;
+
+    private String designMessage;
+
+    private LocalDateTime designUpdateTime;
+    private LocalDateTime adminReviewTime;
+    private String adminReviewComment;
+
+    private Boolean isPublic;
+    private String shareToken;
 
     // Getters and Setters
     public Long getId() {
@@ -255,6 +287,150 @@ public class MemorialVO {
 
     public void setPreviewContent(Object previewContent) {
         this.previewContent = previewContent;
+    }
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    public Integer getDesignStatus() {
+        return designStatus;
+    }
+
+    public void setDesignStatus(Integer designStatus) {
+        this.designStatus = designStatus;
+    }
+
+    public String getDesignStatusText() {
+        return designStatusText;
+    }
+
+    public void setDesignStatusText(String designStatusText) {
+        this.designStatusText = designStatusText;
+    }
+
+    public Long getDesignProviderId() {
+        return designProviderId;
+    }
+
+    public void setDesignProviderId(Long designProviderId) {
+        this.designProviderId = designProviderId;
+    }
+
+    public String getDesignProviderName() {
+        return designProviderName;
+    }
+
+    public void setDesignProviderName(String designProviderName) {
+        this.designProviderName = designProviderName;
+    }
+
+    public List<String> getPetPhotoUrls() {
+        return petPhotoUrls;
+    }
+
+    public void setPetPhotoUrls(List<String> petPhotoUrls) {
+        this.petPhotoUrls = petPhotoUrls;
+    }
+
+    public List<String> getDesignDraftImages() {
+        return designDraftImages;
+    }
+
+    public void setDesignDraftImages(List<String> designDraftImages) {
+        this.designDraftImages = designDraftImages;
+    }
+
+    public String getDesignDraftPdfUrl() {
+        return designDraftPdfUrl;
+    }
+
+    public void setDesignDraftPdfUrl(String designDraftPdfUrl) {
+        this.designDraftPdfUrl = designDraftPdfUrl;
+    }
+
+    public List<String> getOwnerFeedbackImages() {
+        return ownerFeedbackImages;
+    }
+
+    public void setOwnerFeedbackImages(List<String> ownerFeedbackImages) {
+        this.ownerFeedbackImages = ownerFeedbackImages;
+    }
+
+    public String getOwnerFeedbackPdfUrl() {
+        return ownerFeedbackPdfUrl;
+    }
+
+    public void setOwnerFeedbackPdfUrl(String ownerFeedbackPdfUrl) {
+        this.ownerFeedbackPdfUrl = ownerFeedbackPdfUrl;
+    }
+
+    public List<String> getDesignFinalImages() {
+        return designFinalImages;
+    }
+
+    public void setDesignFinalImages(List<String> designFinalImages) {
+        this.designFinalImages = designFinalImages;
+    }
+
+    public String getDesignFinalPdfUrl() {
+        return designFinalPdfUrl;
+    }
+
+    public void setDesignFinalPdfUrl(String designFinalPdfUrl) {
+        this.designFinalPdfUrl = designFinalPdfUrl;
+    }
+
+    public String getDesignMessage() {
+        return designMessage;
+    }
+
+    public void setDesignMessage(String designMessage) {
+        this.designMessage = designMessage;
+    }
+
+    public LocalDateTime getDesignUpdateTime() {
+        return designUpdateTime;
+    }
+
+    public void setDesignUpdateTime(LocalDateTime designUpdateTime) {
+        this.designUpdateTime = designUpdateTime;
+    }
+
+    public LocalDateTime getAdminReviewTime() {
+        return adminReviewTime;
+    }
+
+    public void setAdminReviewTime(LocalDateTime adminReviewTime) {
+        this.adminReviewTime = adminReviewTime;
+    }
+
+    public String getAdminReviewComment() {
+        return adminReviewComment;
+    }
+
+    public void setAdminReviewComment(String adminReviewComment) {
+        this.adminReviewComment = adminReviewComment;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    public String getShareToken() {
+        return shareToken;
+    }
+
+    public void setShareToken(String shareToken) {
+        this.shareToken = shareToken;
     }
 }
 

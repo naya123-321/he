@@ -135,7 +135,7 @@
           class="photo-uploader"
           :action="uploadAction"
           :headers="uploadHeaders"
-          :file-list="photoList"
+          v-model:file-list="photoList"
           :on-success="handleUploadSuccess"
           :on-remove="handleRemovePhoto"
           :before-upload="beforeUpload"
@@ -210,6 +210,34 @@
           label-width="120px"
           class="memorial-form"
         >
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="关联订单" prop="orderId">
+                <el-select
+                  v-model="memorialForm.orderId"
+                  placeholder="请选择订单（不选则无法提交设计）"
+                  clearable
+                  filterable
+                  style="width: 100%"
+                  :loading="loadingOrders"
+                >
+                  <el-option
+                    v-for="o in orders"
+                    :key="o.id"
+                    :label="`订单#${o.id} ${o.orderNo || ''}（${o.petName || ''}）`"
+                    :value="o.id"
+                  >
+                    <div style="display:flex; justify-content: space-between; gap: 12px;">
+                      <span>订单#{{ o.id }} {{ o.orderNo }}</span>
+                      <span style="color:#909399;">{{ o.createTime ? new Date(o.createTime).toLocaleString('zh-CN') : '' }}</span>
+                    </div>
+                  </el-option>
+                </el-select>
+                <div class="form-tip">关联订单后，才可以在“我的纪念册”里提交到服务端设计。</div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="副标题" prop="subtitle">
@@ -419,6 +447,8 @@ import { Picture, Check, Plus } from "@element-plus/icons-vue";
 import { useMemorialStore } from "@/store/memorial";
 import { memorialApi, type TemplateVO } from "@/api/memorial";
 import request from "@/api/request";
+import type { UploadFile } from "element-plus";
+import { orderApi, type OrderVO } from "@/api/order";
 
 // 定义事件
 const emit = defineEmits<{
@@ -441,8 +471,8 @@ const activeCategory = ref("all");
 const selectedTemplateId = ref<number | null>(null);
 // 选中的模板
 const selectedTemplate = ref<TemplateVO | null>(null);
-// 照片列表
-const photoList = ref<any[]>([]);
+// 照片列表（ElementPlus UploadFile）
+const photoList = ref<UploadFile[]>([]);
 
 // 表单引用
 const memorialFormRef = ref();
@@ -458,6 +488,22 @@ const memorialForm = reactive({
   petMemory: "",
   orderId: null as number | null,
 });
+
+// 订单列表（用于关联订单）
+const orders = ref<OrderVO[]>([]);
+const loadingOrders = ref(false);
+
+async function loadMyOrders() {
+  loadingOrders.value = true;
+  try {
+    const res = await orderApi.getOrderList({ pageNum: 1, pageSize: 50 });
+    orders.value = res.data?.records || [];
+  } catch {
+    orders.value = [];
+  } finally {
+    loadingOrders.value = false;
+  }
+}
 
 // 表单验证规则
 const memorialRules = reactive({
@@ -644,16 +690,14 @@ const beforeUpload = (file: File) => {
   return true;
 };
 
-// 上传成功
-const handleUploadSuccess = (response: any, file: any) => {
+// 上传成功：使用 v-model:file-list，由 Upload 组件维护列表，这里只回填 url
+const handleUploadSuccess = (response: any, uploadFile: any) => {
   if (response && response.code === 200) {
-    photoList.value.push({
-      name: file.name,
-      url: response.data,
-      uid: file.uid,
-    });
+    uploadFile.url = response.data;
+    uploadFile.status = "success";
     ElMessage.success("照片上传成功");
   } else {
+    uploadFile.status = "fail";
     ElMessage.error(response?.message || "上传失败");
   }
 };
@@ -691,6 +735,9 @@ const createMemorial = async () => {
       petBirthDate: formatDateForBackend(memorialForm.petBirthDate),
       petDeathDate: formatDateForBackend(memorialForm.petDeathDate),
       petMemory: memorialForm.petMemory,
+      photoUrls: photoList.value
+        .filter((f) => (f as any)?.status === "success" && (f as any)?.url)
+        .map((f) => (f as any).url as string),
     };
 
     const result = await memorialStore.createMemorial(createData);
@@ -746,6 +793,9 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+
+  // 加载订单列表（用于关联订单）
+  loadMyOrders();
 });
 </script>
 
@@ -1045,6 +1095,13 @@ onMounted(async () => {
         flex-wrap: wrap;
       }
     }
+  }
+
+  .form-tip {
+    margin-top: 6px;
+    color: #909399;
+    font-size: 12px;
+    line-height: 1.4;
   }
 }
 

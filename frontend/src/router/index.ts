@@ -243,6 +243,25 @@ const routes = [
         name: "MemorialPreview",
         component: () => import("@/views/memorial/MemorialPreview.vue"),
       },
+      {
+        path: "annotate/:id",
+        name: "MemorialAnnotate",
+        component: () => import("@/views/memorial/MemorialAnnotate.vue"),
+      },
+    ],
+  },
+
+  // 公开分享（不需要登录）
+  {
+    path: "/memorial/share/:token",
+    component: () => import("@/layouts/BasicLayout.vue"),
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: "",
+        name: "MemorialShare",
+        component: () => import("@/views/memorial/MemorialShare.vue"),
+      },
     ],
   },
 

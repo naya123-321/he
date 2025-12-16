@@ -88,6 +88,63 @@ export const memorialApi = {
   deleteMemorial: (id: number) => {
     return request.delete<ApiResponse<boolean>>(`/memorial/${id}`);
   },
+
+  // 绑定关联订单（宠主）
+  bindOrder: (memorialId: number, orderId: number) => {
+    return request.post<ApiResponse<MemorialVO>>(`/memorial/bind-order/${memorialId}`, null, {
+      params: { orderId },
+    });
+  },
+
+  // ===== 设计协作 =====
+  // 宠主提交到服务端设计
+  submitForDesign: (id: number) => {
+    return request.post<ApiResponse<MemorialVO>>(`/memorial/submit-design/${id}`);
+  },
+
+  // 服务端上传设计稿（多图 + 单PDF）
+  providerUploadDraft: (id: number, params: { images?: File[]; pdf?: File; message?: string }) => {
+    const formData = new FormData();
+    (params.images || []).forEach((f) => formData.append("images", f));
+    if (params.pdf) formData.append("pdf", params.pdf);
+    if (params.message) formData.append("message", params.message);
+    return request.post<ApiResponse<MemorialVO>>(`/memorial/provider/upload-draft/${id}`, formData);
+  },
+
+  // 宠主回传修改稿（多图 + 单PDF）
+  ownerUploadFeedback: (id: number, params: { images?: File[]; pdf?: File; message?: string }) => {
+    const formData = new FormData();
+    (params.images || []).forEach((f) => formData.append("images", f));
+    if (params.pdf) formData.append("pdf", params.pdf);
+    if (params.message) formData.append("message", params.message);
+    return request.post<ApiResponse<MemorialVO>>(`/memorial/owner/upload-feedback/${id}`, formData);
+  },
+
+  // 宠主确认最终版
+  ownerConfirmFinal: (id: number) => {
+    return request.post<ApiResponse<MemorialVO>>(`/memorial/owner/confirm-final/${id}`);
+  },
+
+  // 服务端上传最终版并提交管理员审核（多图 + 单PDF）
+  providerUploadFinal: (id: number, params: { images?: File[]; pdf?: File; message?: string }) => {
+    const formData = new FormData();
+    (params.images || []).forEach((f) => formData.append("images", f));
+    if (params.pdf) formData.append("pdf", params.pdf);
+    if (params.message) formData.append("message", params.message);
+    return request.post<ApiResponse<MemorialVO>>(`/memorial/provider/upload-final/${id}`, formData);
+  },
+
+  // 管理员审核
+  adminReview: (id: number, approved: boolean, comment?: string, isPublic?: boolean) => {
+    return request.post<ApiResponse<MemorialVO>>(`/memorial/admin/review/${id}`, null, {
+      params: { approved, comment, isPublic },
+    });
+  },
+
+  // 分享访问（公开、且管理员已通过）
+  getSharedMemorial: (token: string) => {
+    return request.get<ApiResponse<MemorialVO>>(`/memorial/share/${token}`);
+  },
 };
 
 // 模板管理相关API（管理员和服务人员）
@@ -205,6 +262,7 @@ export interface MemorialPublishDTO {
 export interface MemorialQueryDTO {
   userId?: number;
   status?: number;
+  designStatus?: number;
   petName?: string;
   title?: string;
   sortBy?: string;
@@ -242,6 +300,26 @@ export interface MemorialVO {
   publishTime?: string;
   createTime: string;
   previewContent?: any;
+
+  // ===== 设计协作/分享 =====
+  orderId?: number;
+  designStatus?: number;
+  designStatusText?: string;
+  designProviderId?: number;
+  designProviderName?: string;
+  petPhotoUrls?: string[];
+  designDraftImages?: string[];
+  designDraftPdfUrl?: string;
+  ownerFeedbackImages?: string[];
+  ownerFeedbackPdfUrl?: string;
+  designFinalImages?: string[];
+  designFinalPdfUrl?: string;
+  designMessage?: string;
+  designUpdateTime?: string;
+  adminReviewTime?: string;
+  adminReviewComment?: string;
+  isPublic?: boolean;
+  shareToken?: string;
 }
 
 export interface PageResult<T> {

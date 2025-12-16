@@ -3,6 +3,7 @@ package com.example.demo.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class MemorialCreateDTO {
     private String title;
@@ -18,6 +19,11 @@ public class MemorialCreateDTO {
     private String petDeathDate;
     
     private String petMemory;
+
+    /**
+     * 宠主在创建流程中上传的宠物照片URL（可能来自 /uploads/memorial/temp/**）
+     */
+    private List<String> photoUrls;
     
     // 获取转换后的LocalDateTime（供Service层使用）
     public LocalDateTime getPetBirthDateAsDateTime() {
@@ -125,5 +131,13 @@ public class MemorialCreateDTO {
 
     public void setPetMemory(String petMemory) {
         this.petMemory = petMemory;
+    }
+
+    public List<String> getPhotoUrls() {
+        return photoUrls;
+    }
+
+    public void setPhotoUrls(List<String> photoUrls) {
+        this.photoUrls = photoUrls;
     }
 }

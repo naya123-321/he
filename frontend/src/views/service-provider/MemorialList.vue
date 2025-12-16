@@ -27,6 +27,7 @@
           <el-table-column prop="title" label="纪念册标题" width="250" />
           <el-table-column prop="petName" label="宠物姓名" width="120" />
           <el-table-column prop="petType" label="宠物类型" width="120" />
+          <el-table-column prop="designStatusText" label="协作状态" width="160" />
           <el-table-column prop="statusText" label="状态" width="100">
             <template #default="{ row }">
               <el-tag :type="getStatusType(row.status)">
@@ -130,6 +131,7 @@ const loadMemorialList = async () => {
     console.log('开始加载纪念册列表...');
     const res = await memorialApi.getMemorialList({
       status: undefined, // 获取所有状态的纪念册
+      // 服务端主要关注已提交设计/宠主回传/待确认/待审核等，先不过滤，后续可加筛选
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
     });

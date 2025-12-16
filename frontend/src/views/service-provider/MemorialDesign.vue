@@ -3,29 +3,129 @@
     <el-page-header @back="goBack" content="纪念册设计" />
     
     <div class="content-wrapper">
-      <el-empty v-if="!memorialInfo" description="未找到纪念册信息" />
+      <el-empty v-if="!loading && !memorialInfo" description="未找到纪念册信息" />
       
-      <div v-else>
+      <div v-else-if="memorialInfo">
         <div class="memorial-header">
           <h2>{{ memorialInfo.title }}</h2>
           <p>{{ memorialInfo.subtitle }}</p>
         </div>
         
-        <el-alert
-          message="此功能正在开发中，敬请期待"
-          type="info"
-          show-icon
-          :closable="false"
-          style="margin-bottom: 20px;"
-        />
+        <el-card shadow="never" class="section">
+          <template #header>
+            <div class="section-title">
+              <span>协作状态</span>
+              <el-tag type="info">{{ memorialInfo.designStatusText }}</el-tag>
+            </div>
+          </template>
+          <div class="meta-row">
+            <div>宠主：{{ memorialInfo.username || "-" }}</div>
+            <div>宠物：{{ memorialInfo.petName }} {{ memorialInfo.petType ? `(${memorialInfo.petType})` : "" }}</div>
+          </div>
+          <div class="meta-row">
+            <div>订单ID：{{ memorialInfo.orderId || "-" }}</div>
+            <div>指派服务人员：{{ memorialInfo.designProviderName || memorialInfo.designProviderId || "-" }}</div>
+          </div>
+        </el-card>
+
+        <el-card shadow="never" class="section">
+          <template #header>
+            <div class="section-title">
+              <span>宠主原始照片（可下载）</span>
+              <el-button size="small" @click="downloadAllPetPhotos" :disabled="petPhotos.length === 0">下载全部</el-button>
+            </div>
+          </template>
+          <el-empty v-if="petPhotos.length === 0" description="暂无宠主照片" :image-size="120" />
+          <div v-else class="images">
+            <div v-for="url in petPhotos" :key="url" class="img-item">
+              <el-image :src="url" :preview-src-list="petPhotos" fit="cover" style="width: 220px; height: 150px; border-radius: 8px" />
+              <div class="img-actions">
+                <el-button link type="primary" @click="downloadUrl(url)">下载</el-button>
+              </div>
+            </div>
+          </div>
+        </el-card>
+
+        <el-card shadow="never" class="section">
+          <template #header>
+            <div class="section-title">
+              <span>上传设计稿（多图 / PDF）</span>
+            </div>
+          </template>
+          <el-form label-width="110px">
+            <el-form-item label="设计稿图片">
+              <el-upload v-model:file-list="draftImageList" :auto-upload="false" list-type="picture-card" accept="image/*" multiple>
+                <el-icon><Plus /></el-icon>
+              </el-upload>
+            </el-form-item>
+            <el-form-item label="设计稿PDF">
+              <el-upload v-model:file-list="draftPdfList" :auto-upload="false" accept="application/pdf" :limit="1">
+                <el-button>选择PDF</el-button>
+              </el-upload>
+            </el-form-item>
+            <el-form-item label="说明">
+              <el-input v-model="draftMessage" type="textarea" :rows="3" placeholder="给宠主的说明（选填）" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="uploadingDraft" @click="uploadDraft">上传设计稿</el-button>
+              <el-button @click="refresh">刷新</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+
+        <el-card shadow="never" class="section">
+          <template #header>
+            <div class="section-title">
+              <span>宠主回传修改稿</span>
+            </div>
+          </template>
+          <el-empty v-if="feedbackImages.length === 0 && !feedbackPdf" description="暂无回传稿" :image-size="120" />
+          <div v-if="feedbackImages.length > 0" class="images">
+            <el-image
+              v-for="url in feedbackImages"
+              :key="url"
+              :src="url"
+              :preview-src-list="feedbackImages"
+              fit="cover"
+              style="width: 220px; height: 150px; border-radius: 8px"
+            />
+          </div>
+          <div v-if="feedbackPdf" class="pdf">
+            <el-button type="primary" link @click="openUrl(feedbackPdf)">在线查看PDF</el-button>
+            <el-button link @click="downloadUrl(feedbackPdf)">下载PDF</el-button>
+          </div>
+        </el-card>
+
+        <el-card shadow="never" class="section">
+          <template #header>
+            <div class="section-title">
+              <span>上传最终版并提交管理员审核</span>
+              <el-tag type="warning">需要宠主先确认最终版</el-tag>
+            </div>
+          </template>
+          <el-form label-width="110px">
+            <el-form-item label="最终版图片">
+              <el-upload v-model:file-list="finalImageList" :auto-upload="false" list-type="picture-card" accept="image/*" multiple>
+                <el-icon><Plus /></el-icon>
+              </el-upload>
+            </el-form-item>
+            <el-form-item label="最终版PDF">
+              <el-upload v-model:file-list="finalPdfList" :auto-upload="false" accept="application/pdf" :limit="1">
+                <el-button>选择PDF</el-button>
+              </el-upload>
+            </el-form-item>
+            <el-form-item label="说明">
+              <el-input v-model="finalMessage" type="textarea" :rows="3" placeholder="给管理员/宠主的说明（选填）" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="uploadingFinal" @click="uploadFinal">上传并提交审核</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
         
         <div class="design-tools">
-          <el-button type="primary" @click="openEditor">
-            打开编辑器
-          </el-button>
-          <el-button @click="previewMemorial">
-            预览纪念册
-          </el-button>
+          <el-button type="primary" @click="openEditor">打开编辑器</el-button>
+          <el-button @click="previewMemorial">预览纪念册</el-button>
         </div>
       </div>
     </div>
@@ -33,13 +133,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ElPageHeader, ElEmpty, ElAlert, ElButton } from 'element-plus';
+import { ElMessage, ElPageHeader, ElEmpty, ElButton } from 'element-plus';
+import type { UploadFile } from 'element-plus';
+import { Plus } from '@element-plus/icons-vue';
+import { memorialApi, type MemorialVO } from '@/api/memorial';
 
 const router = useRouter();
 const route = useRoute();
-const memorialInfo = ref<any>(null);
+const memorialInfo = ref<MemorialVO | null>(null);
+const loading = ref(false);
+
+const uploadingDraft = ref(false);
+const uploadingFinal = ref(false);
+const draftImageList = ref<UploadFile[]>([]);
+const draftPdfList = ref<UploadFile[]>([]);
+const draftMessage = ref('');
+
+const finalImageList = ref<UploadFile[]>([]);
+const finalPdfList = ref<UploadFile[]>([]);
+const finalMessage = ref('');
+
+const petPhotos = computed<string[]>(() => memorialInfo.value?.petPhotoUrls || []);
+const feedbackImages = computed<string[]>(() => memorialInfo.value?.ownerFeedbackImages || []);
+const feedbackPdf = computed<string | null>(() => memorialInfo.value?.ownerFeedbackPdfUrl || null);
 
 const goBack = () => {
   router.back();
@@ -57,16 +175,100 @@ const previewMemorial = () => {
   }
 };
 
-onMounted(() => {
-  const id = route.params.id;
-  if (id) {
-    // TODO: 加载纪念册信息
-    memorialInfo.value = {
-      id: Number(id),
-      title: '纪念册设计',
-      subtitle: '为宠物创建美好的回忆'
-    };
+function openUrl(url: string) {
+  window.open(url, "_blank");
+}
+
+function downloadUrl(url: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "";
+  a.target = "_blank";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function refresh() {
+  const id = Number(route.params.id);
+  if (!id) return;
+  loading.value = true;
+  try {
+    const res = await memorialApi.getMemorialDetail(id);
+    memorialInfo.value = res.data;
+  } catch (e: any) {
+    memorialInfo.value = null;
+    ElMessage.error(e?.message || "加载失败");
+  } finally {
+    loading.value = false;
   }
+}
+
+async function uploadDraft() {
+  if (!memorialInfo.value?.id) return;
+  const images = draftImageList.value.map((f: any) => f.raw as File).filter(Boolean);
+  const pdf = draftPdfList.value?.[0] ? ((draftPdfList.value[0] as any).raw as File) : undefined;
+  if (images.length === 0 && !pdf) {
+    ElMessage.warning("请至少选择图片或PDF");
+    return;
+  }
+  uploadingDraft.value = true;
+  try {
+    await memorialApi.providerUploadDraft(memorialInfo.value.id, {
+      images,
+      pdf,
+      message: draftMessage.value || undefined,
+    });
+    ElMessage.success("已上传设计稿");
+    draftImageList.value = [];
+    draftPdfList.value = [];
+    draftMessage.value = "";
+    await refresh();
+  } catch (e: any) {
+    ElMessage.error(e?.message || "上传失败");
+  } finally {
+    uploadingDraft.value = false;
+  }
+}
+
+async function uploadFinal() {
+  if (!memorialInfo.value?.id) return;
+  const images = finalImageList.value.map((f: any) => f.raw as File).filter(Boolean);
+  const pdf = finalPdfList.value?.[0] ? ((finalPdfList.value[0] as any).raw as File) : undefined;
+  if (images.length === 0 && !pdf) {
+    ElMessage.warning("请至少选择图片或PDF");
+    return;
+  }
+  uploadingFinal.value = true;
+  try {
+    await memorialApi.providerUploadFinal(memorialInfo.value.id, {
+      images,
+      pdf,
+      message: finalMessage.value || undefined,
+    });
+    ElMessage.success("已上传最终版并提交审核");
+    finalImageList.value = [];
+    finalPdfList.value = [];
+    finalMessage.value = "";
+    await refresh();
+  } catch (e: any) {
+    ElMessage.error(e?.message || "上传失败");
+  } finally {
+    uploadingFinal.value = false;
+  }
+}
+
+async function downloadAllPetPhotos() {
+  if (petPhotos.value.length === 0) return;
+  for (const url of petPhotos.value) {
+    downloadUrl(url);
+    // 小延迟，避免浏览器拦截过多下载
+    await new Promise((r) => setTimeout(r, 150));
+  }
+}
+
+onMounted(() => {
+  refresh();
 });
 </script>
 
@@ -97,6 +299,50 @@ onMounted(() => {
   .design-tools {
     display: flex;
     gap: 12px;
+    margin-top: 16px;
+  }
+
+  .section {
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    color: #606266;
+    margin-bottom: 8px;
+  }
+
+  .images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .img-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .img-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .pdf {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 }
 </style>
