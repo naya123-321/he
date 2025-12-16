@@ -262,6 +262,25 @@ public class OrderController {
     }
 
     /**
+     * 宠主提交满意度评价（仅已完成订单，不改变订单状态）
+     */
+    @PostMapping("/review/{id}")
+    public Result<Boolean> submitReview(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable Long id,
+            @RequestParam Integer rating,
+            @RequestParam(required = false) String review
+    ) {
+        try {
+            Long userId = parseUserIdFromToken(token);
+            boolean success = orderService.submitReview(id, userId, rating, review);
+            return Result.success(success);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 添加服务记录
      */
     @PostMapping("/add-note/{id}")

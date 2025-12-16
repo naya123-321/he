@@ -50,6 +50,13 @@ export const orderApi = {
     );
   },
 
+  // 宠主提交满意度评价（不改变订单状态，仅已完成订单）
+  submitReview: (id: number, rating: number, review?: string) => {
+    return request.post<ApiResponse<boolean>>(
+      `/order/review/${id}?rating=${rating}&review=${encodeURIComponent(review || "")}`
+    );
+  },
+
   // 获取订单状态日志
   getStatusLogs: (id: number) => {
     return request.get<ApiResponse<any[]>>(`/order/status-logs/${id}`);

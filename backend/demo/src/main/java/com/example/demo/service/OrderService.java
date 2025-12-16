@@ -252,6 +252,34 @@ public class OrderService {
         return true;
     }
 
+    /**
+     * 提交订单评价（不改变订单状态）
+     * 仅允许在订单已完成(status=3)后提交
+     */
+    @Transactional
+    public boolean submitReview(Long orderId, Long userId, Integer rating, String review) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new RuntimeException("订单不存在");
+        }
+        Order order = orderOpt.get();
+        if (!order.getUserId().equals(userId)) {
+            throw new RuntimeException("无权评价该订单");
+        }
+        if (order.getStatus() == null || order.getStatus() != 3) {
+            throw new RuntimeException("订单未完成，无法评价");
+        }
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new RuntimeException("评分需为 1-5 星");
+        }
+        order.setRating(rating);
+        if (review != null) {
+            order.setReview(review);
+        }
+        orderRepository.save(order);
+        return true;
+    }
+
     private OrderVO convertToVO(Order order) {
         OrderVO vo = new OrderVO();
         BeanUtils.copyProperties(order, vo);

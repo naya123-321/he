@@ -61,7 +61,7 @@
       v-model="detailDialogVisible"
       :title="detail?.title || '资源详情'"
       width="820px"
-      @close="detail = null"
+      @close="handleCloseDetail"
     >
       <div v-if="detail" class="resource-detail">
         <div v-if="detail.coverImage" class="detail-cover">
@@ -73,7 +73,31 @@
         </div>
 
         <div v-if="detail.type === 'video' && detail.fileUrl" class="video-player">
-          <video :src="detail.fileUrl" controls style="width: 100%; max-height: 520px" />
+          <!-- 某些“疗愈音乐”可能是音频型 mp4：loadedmetadata 时 videoWidth=0，此时自动切换为 audio 播放 -->
+          <video
+            v-if="!audioOnly"
+            ref="videoRef"
+            :src="detail.fileUrl"
+            controls
+            preload="metadata"
+            playsinline
+            :poster="detail.coverImage || ''"
+            style="width: 100%; height: 420px; background: #000; border-radius: 10px"
+            @loadedmetadata="handleVideoMeta"
+            @error="handleMediaError"
+          />
+          <audio
+            v-else
+            :src="detail.fileUrl"
+            controls
+            style="width: 100%"
+            @error="handleMediaError"
+          />
+          <div class="media-tip">
+            若无法播放，可
+            <a :href="detail.fileUrl" target="_blank" rel="noreferrer">打开文件</a>
+            查看/下载。
+          </div>
         </div>
 
         <div v-else class="detail-content">
@@ -112,6 +136,8 @@ const list = ref<GriefResourceVO[]>([]);
 
 const detailDialogVisible = ref(false);
 const detail = ref<GriefResourceVO | null>(null);
+const videoRef = ref<HTMLVideoElement | null>(null);
+const audioOnly = ref(false);
 
 const articles = computed(() => list.value.filter((r) => r.type === "article"));
 const videos = computed(() => list.value.filter((r) => r.type === "video"));
@@ -148,10 +174,30 @@ async function openDetail(id: number) {
   try {
     const res = await griefResourceApi.getGriefResourceDetail(id);
     detail.value = res.data;
+    audioOnly.value = false;
     detailDialogVisible.value = true;
   } catch (e: any) {
     ElMessage.error(e?.message || "获取详情失败");
   }
+}
+
+function handleCloseDetail() {
+  detail.value = null;
+  audioOnly.value = false;
+  videoRef.value = null;
+}
+
+function handleVideoMeta() {
+  const v = videoRef.value;
+  if (!v) return;
+  // audio-only mp4 会出现 0x0
+  if ((v.videoWidth || 0) === 0 && (v.videoHeight || 0) === 0) {
+    audioOnly.value = true;
+  }
+}
+
+function handleMediaError() {
+  ElMessage.error("媒体加载失败，请检查文件URL或稍后重试");
 }
 
 onMounted(() => {
@@ -288,6 +334,15 @@ onMounted(() => {
 
     .video-player {
       margin-bottom: 12px;
+    }
+
+    .media-tip {
+      margin-top: 8px;
+      color: #909399;
+      font-size: 12px;
+      a {
+        color: #409eff;
+      }
     }
 
     .detail-meta {
