@@ -3,15 +3,13 @@
     <!-- 导航栏 -->
     <el-header class="main-header">
       <div class="container">
-        <div class="logo">与AI对话</div>
+        <div class="logo">宠物纪念馆</div>
         <div class="nav-links">
           <span @click="scrollToSection('home')">首页</span>
 
           <span @click="scrollToSection('process')">服务流程</span>
 
           <span @click="scrollToSection('packages')">套餐介绍</span>
-
-          <span @click="scrollToSection('contact')">联系我们</span>
         </div>
         <div class="auth-buttons">
           <!-- 未登录状态 -->
@@ -57,12 +55,35 @@
         <div class="hero-text">
           <h1>陪伴一生,温暖告别</h1>
           <p>专业的宠物殡葬服务,让爱延续</p>
-          <el-button type="primary" size="large" class="learn-more-btn"
-            >了解服务</el-button
+          <el-button
+            type="primary"
+            size="large"
+            class="learn-more-btn"
+            @click="scrollToSection('packages')"
           >
+            查看套餐
+          </el-button>
         </div>
-        <div class="hero-image">
-          <img src="@/assets/images/pet-hero.svg" alt="宠物陪伴" />
+        <div class="hero-media">
+          <el-carousel
+            :interval="4500"
+            height="360px"
+            indicator-position="outside"
+            arrow="hover"
+            class="hero-carousel"
+          >
+            <el-carousel-item v-for="(s, idx) in heroSlides" :key="idx">
+              <div class="hero-slide" :class="`slide-${idx + 1}`">
+                <div class="slide-meta">
+                  <div class="slide-badge">{{ s.badge }}</div>
+                  <div class="slide-name" :title="s.title">{{ s.title }}</div>
+                </div>
+                <div class="slide-media">
+                  <img class="slide-img" :src="s.image" :alt="s.title" />
+                </div>
+              </div>
+            </el-carousel-item>
+          </el-carousel>
         </div>
       </div>
     </section>
@@ -103,36 +124,58 @@
     <section class="process" id="process">
       <div class="container">
         <h2 class="section-title">服务流程</h2>
-        <el-steps direction="vertical" class="process-steps">
-          <template #icon="{ index }">
-            <div class="step-icon">{{ index + 1 }}</div>
-          </template>
-          <el-step title="咨询预约">
-            <div class="step-content">
-              <p>电话沟通或在线预约,我们的专业顾问可为您详细介绍服务内容</p>
+        <div class="process-grid">
+          <div class="process-card">
+            <div class="pc-top">
+              <div class="pc-index">1</div>
+              <div class="pc-icon">
+                <el-icon><ChatLineRound /></el-icon>
+              </div>
             </div>
-          </el-step>
-          <el-step title="上门接收">
-            <div class="step-content">
-              <p>到外省市可上门接收您的爱宠,全程温柔呵护</p>
+            <div class="pc-title">咨询预约</div>
+            <div class="pc-desc">在线沟通需求，确认服务内容与时间安排</div>
+          </div>
+          <div class="process-card">
+            <div class="pc-top">
+              <div class="pc-index">2</div>
+              <div class="pc-icon">
+                <el-icon><Van /></el-icon>
+              </div>
             </div>
-          </el-step>
-          <el-step title="准备仪式">
-            <div class="step-content">
-              <p>根据您的意愿准备心怡的告别仪式,布置温馨的告别场景</p>
+            <div class="pc-title">上门接收</div>
+            <div class="pc-desc">专车接送，全程温柔呵护与尊重</div>
+          </div>
+          <div class="process-card">
+            <div class="pc-top">
+              <div class="pc-index">3</div>
+              <div class="pc-icon">
+                <el-icon><MagicStick /></el-icon>
+              </div>
             </div>
-          </el-step>
-          <el-step title="告别仪式">
-            <div class="step-content">
-              <p>在庄重温馨的氛围中告别爱宠,让爱宠安详地前往汪星天堂</p>
+            <div class="pc-title">准备仪式</div>
+            <div class="pc-desc">根据意愿布置告别场景，细节更安心</div>
+          </div>
+          <div class="process-card">
+            <div class="pc-top">
+              <div class="pc-index">4</div>
+              <div class="pc-icon">
+                <el-icon><Sunny /></el-icon>
+              </div>
             </div>
-          </el-step>
-          <el-step title="后续关怀">
-            <div class="step-content">
-              <p>提供骨灰寄存、纪念品定制等后续服务,让思念有处安放</p>
+            <div class="pc-title">告别仪式</div>
+            <div class="pc-desc">在温馨庄重的氛围里，好好说再见</div>
+          </div>
+          <div class="process-card">
+            <div class="pc-top">
+              <div class="pc-index">5</div>
+              <div class="pc-icon">
+                <el-icon><Present /></el-icon>
+              </div>
             </div>
-          </el-step>
-        </el-steps>
+            <div class="pc-title">后续关怀</div>
+            <div class="pc-desc">骨灰寄存、纪念册制作，让思念有处安放</div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -141,117 +184,23 @@
       <div class="container">
         <h2 class="section-title">服务套餐</h2>
         <div class="packages-grid">
-          <!-- 基础套餐 -->
-          <el-card class="package-card basic-package">
-            <div class="package-header">
-              <h3>基础套餐</h3>
-              <p class="package-price">¥1,888</p>
-            </div>
-            <ul class="package-features">
-              <li>• 专业接送服务</li>
-              <li>• 基础告别仪式</li>
-              <li>• 火化处理</li>
-              <li>• 骨灰盒</li>
-              <li>• 纪念证书</li>
-            </ul>
-            <el-button
-              type="primary"
-              class="package-btn"
-              @click="goToPackage('basic')"
-              >选择套餐</el-button
-            >
-          </el-card>
-
-          <!-- 标准套餐 -->
-          <el-card class="package-card standard-package">
-            <div class="package-header">
-              <h3>标准套餐</h3>
-              <p class="package-price">¥3,888</p>
-            </div>
-            <ul class="package-features">
-              <li>• 专业接送服务</li>
-              <li>• 标准告别仪式</li>
-              <li>• 火化处理</li>
-              <li>• 精美骨灰盒</li>
-              <li>• 纪念证书</li>
-              <li>• 宠物生前照片整理</li>
-              <li>• 在线纪念堂</li>
-            </ul>
-            <el-button
-              type="primary"
-              class="package-btn"
-              @click="goToPackage('standard')"
-              >选择套餐</el-button
-            >
-          </el-card>
-
-          <!-- 尊享套餐 -->
-          <el-card class="package-card premium-package">
-            <div class="package-header">
-              <h3>尊享套餐</h3>
-              <p class="package-price">¥6,888</p>
-            </div>
-            <ul class="package-features">
-              <li>• VIP专车接送</li>
-              <li>• 豪华告别仪式</li>
-              <li>• 火化处理</li>
-              <li>• 定制骨灰盒</li>
-              <li>• 纪念证书</li>
-              <li>• 专业摄影服务</li>
-              <li>• 在线纪念堂</li>
-              <li>• 定制纪念品</li>
-              <li>• 一年免费骨灰寄存</li>
-            </ul>
-            <el-button
-              type="primary"
-              class="package-btn"
-              @click="goToPackage('premium')"
-              >选择套餐</el-button
-            >
-          </el-card>
-        </div>
-      </div>
-    </section>
-
-    <!-- 联系和咨询 -->
-    <section class="contact" id="contact">
-      <div class="container contact-content">
-        <div class="contact-info">
-          <h2 class="section-title">联系我们</h2>
-          <p>24小时服务热线: 400-888-8888</p>
-          <p>地址: 北京市朝阳区阳光大街1212号</p>
-          <p>邮箱: contact@petfuneral.com</p>
-        </div>
-
-        <div class="contact-form">
-          <h2 class="section-title">在线咨询</h2>
-          <el-form
-            ref="consultFormRef"
-            :model="contactForm"
-            :rules="contactRules"
+          <el-card
+            v-for="(pkg, idx) in homePackages"
+            :key="pkg.id || idx"
+            class="package-card"
+            :class="idx === 0 ? 'basic-package' : idx === 1 ? 'standard-package' : 'premium-package'"
           >
-            <el-form-item>
-              <el-input v-model="contactForm.name" placeholder="您的姓名" />
-            </el-form-item>
-            <el-form-item>
-              <el-input v-model="contactForm.phone" placeholder="联系电话" />
-            </el-form-item>
-            <el-form-item>
-              <el-input
-                v-model="contactForm.message"
-                type="textarea"
-                placeholder="请描述您的需求"
-                :rows="4"
-              />
-            </el-form-item>
-            <el-button
-              type="primary"
-              class="submit-btn"
-              style="width: 100%"
-              @click="submitConsultation(consultFormRef)"
-              >提交咨询</el-button
-            >
-          </el-form>
+            <div class="package-header">
+              <h3>{{ pkg.name }}</h3>
+              <p class="package-price">¥{{ formatPrice(pkg.price) }}</p>
+            </div>
+            <ul class="package-features">
+              <li v-for="(f, i) in parseProcessToFeatures(pkg.process).slice(0, 8)" :key="i">
+                • {{ f }}
+              </li>
+            </ul>
+            <el-button type="primary" class="package-btn" @click="goToPackage('')">选择套餐</el-button>
+          </el-card>
         </div>
       </div>
     </section>
@@ -274,18 +223,29 @@ import {
   StarFilled,
   HomeFilled,
   Tools,
-  Phone,
-  Message,
-  MapLocation,
+  ChatLineRound,
+  Van,
+  MagicStick,
+  Sunny,
+  Present,
   User,
   SwitchButton,
   ArrowDown,
 } from "@element-plus/icons-vue";
 import { useUserStore } from "@/store/user";
-import { contactApi } from "@/api/contact";
+import { memorialApi, type TemplateVO, templateApi } from "@/api/memorial";
+import { serviceTypeApi, type ServiceTypeVO } from "@/api/order";
 
 const router = useRouter();
 const userStore = useUserStore();
+
+const heroSlides = ref<Array<{ badge: string; title: string; image: string }>>([
+  { badge: "纪念册模板", title: "精选模板 · 让思念更温柔", image: new URL("@/assets/images/pet-hero.svg", import.meta.url).toString() },
+  { badge: "纪念册模板", title: "多图展示 · 细节更动人", image: new URL("@/assets/images/pet-hero.svg", import.meta.url).toString() },
+  { badge: "纪念册模板", title: "风格多样 · 总有一款适合TA", image: new URL("@/assets/images/pet-hero.svg", import.meta.url).toString() },
+]);
+
+const homePackages = ref<ServiceTypeVO[]>([]);
 
 // 初始化用户信息
 onMounted(() => {
@@ -293,7 +253,115 @@ onMounted(() => {
   if (userStore.isLogin && !userStore.userInfo) {
     userStore.initUserInfo();
   }
+
+  loadHomeTemplates();
+  loadHomePackages();
 });
+
+function getTemplateImages(template: any): string[] {
+  if (!template) return [];
+  const out: string[] = [];
+  const tryParse = (val: any) => {
+    if (!val) return;
+    if (Array.isArray(val)) {
+      val.forEach((x) => x && out.push(String(x)));
+      return;
+    }
+    if (typeof val === "string") {
+      const s = val.trim();
+      if (!s) return;
+      try {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((x) => x && out.push(String(x)));
+          return;
+        }
+        if (parsed?.templateImages && Array.isArray(parsed.templateImages)) {
+          parsed.templateImages.forEach((x: any) => x && out.push(String(x)));
+          return;
+        }
+      } catch {
+        // ignore
+      }
+      // 逗号分隔兜底
+      if (s.includes(",")) {
+        s.split(",").map((x) => x.trim()).filter(Boolean).forEach((x) => out.push(x));
+      }
+    }
+  };
+  tryParse(template.templateImages);
+  tryParse(template.styleConfig);
+  if (template.previewImage) out.push(String(template.previewImage));
+  return Array.from(new Set(out)).filter(Boolean);
+}
+
+function getTemplateCover(template: any): string | null {
+  const imgs = getTemplateImages(template);
+  return imgs.length > 0 ? imgs[0] : null;
+}
+
+async function loadHomeTemplates() {
+  try {
+    // 公开接口：启用模板
+    const res = await memorialApi.getTemplates();
+    const list = (res.data || []) as TemplateVO[];
+
+    const isBad = (t: any, cover: string) => {
+      const name = String(t?.name || "").trim();
+      const cat = String(t?.categoryText || t?.category || "").trim();
+      const url = String(cover || "").toLowerCase();
+      // 跳过：测试模板 / “其他”分类 / 明显水印图
+      if (cat === "其他") return true;
+      if (name.includes("测试") || name.toLowerCase().includes("test")) return true;
+      if (url.includes("redocn") || url.includes("watermark")) return true;
+      return false;
+    };
+
+    const candidates = list
+      .map((t) => ({ t, cover: getTemplateCover(t) }))
+      .filter((x) => !!x.cover)
+      .filter((x) => !isBad(x.t, x.cover!));
+
+    const picked = candidates.slice(0, 3);
+    if (picked.length > 0) {
+      heroSlides.value = picked.map((x) => ({
+        badge: x.t.categoryText || "纪念册模板",
+        title: x.t.name || "纪念册模板",
+        image: x.cover!,
+      }));
+    }
+  } catch {
+    // 忽略：无模板/接口失败时保持默认占位图
+  }
+}
+
+const parseProcessToFeatures = (process?: string): string[] => {
+  if (!process) return [];
+  return process
+    .split(/[\n;]/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+};
+
+const formatPrice = (price: any) => {
+  const n = Number(price);
+  if (Number.isFinite(n)) return n.toFixed(0);
+  return "0";
+};
+
+async function loadHomePackages() {
+  try {
+    const res = await serviceTypeApi.getEnabled();
+    const list = (res.data || []) as ServiceTypeVO[];
+    // 取前三个（按价格从低到高）
+    homePackages.value = [...list]
+      .filter((x) => x && x.status === 1)
+      .sort((a, b) => Number(a.price || 0) - Number(b.price || 0))
+      .slice(0, 3);
+  } catch {
+    homePackages.value = [];
+  }
+}
 
 // 处理用户下拉菜单命令
 const handleUserCommand = (command: string) => {
@@ -365,54 +433,6 @@ const goToRegister = () => {
   }
 };
 
-// 表单状态
-const contactForm = ref({
-  name: "",
-  phone: "",
-  message: "",
-});
-
-// 表单验证规则
-const contactRules = ref({
-  name: [{ required: true, message: "请输入您的姓名", trigger: "blur" }],
-  phone: [
-    { required: true, message: "请输入联系电话", trigger: "blur" },
-    {
-      pattern: /^1[3-9]\d{9}$/,
-      message: "请输入正确的手机号码",
-      trigger: "blur",
-    },
-  ],
-  message: [
-    { required: true, message: "请输入您的需求", trigger: "blur" },
-    { min: 10, message: "需求描述至少10个字符", trigger: "blur" },
-  ],
-});
-
-// 提交咨询表单
-const submitConsultation = async (formEl: any) => {
-  if (!formEl) return;
-  try {
-    await formEl.validate();
-    // 调用API提交表单
-    await contactApi.submitConsultation(contactForm.value);
-    ElMessage.success("咨询提交成功，我们将尽快与您联系");
-    contactForm.value = {
-      name: "",
-      phone: "",
-      message: "",
-    };
-    formEl.resetFields();
-  } catch (error) {
-    console.error("表单提交失败", error);
-  }
-};
-
-// 导航到服务页面
-const goToService = () => {
-  router.push("/services");
-};
-
 // 导航到套餐页面
 const scrollToSection = (sectionId: string) => {
   const element = document.getElementById(sectionId);
@@ -455,25 +475,45 @@ const goToPackage = (_packageType: string) => {
 </script>
 
 <style scoped lang="scss">
-$primary-color: #409eff;
-$success-color: #67c23a;
-$warning-color: #e6a23c;
-$danger-color: #f56c6c;
-$light-bg: #f5f7fa;
+// 温暖柔和色系
+$primary-color: #e07a5f; // 柔和珊瑚橙
+$success-color: #81b29a; // 温柔绿
+$warning-color: #f2cc8f; // 奶油杏
+$danger-color: #d66b6b;
+$light-bg: #fff7f2; // 暖白
 $white: #ffffff;
-$text-primary: #303133;
-$text-secondary: #606266;
-$text-tertiary: #909399;
-$border-color: #e4e7ed;
+$text-primary: #3d2c23; // 暖深棕
+$text-secondary: #6e5a4f;
+$text-tertiary: #9a857a;
+$border-color: #f1e3d8;
+
+.section-title {
+  text-align: center;
+  font-size: 32px;
+  color: $text-primary;
+  margin-bottom: 34px;
+  position: relative;
+
+  &::after {
+    content: "";
+    display: block;
+    width: 60px;
+    height: 4px;
+    background-color: $primary-color;
+    margin: 10px auto 0;
+    border-radius: 2px;
+  }
+}
 
 .home-container {
   font-family: "Helvetica Neue", Arial, sans-serif;
+  background: $light-bg;
 }
 
 /* 导航栏样式 */
 .main-header {
   background-color: $white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 14px rgba(61, 44, 35, 0.06);
   padding: 0;
 
   .container {
@@ -544,8 +584,9 @@ $border-color: #e4e7ed;
 
 /* 主横幅样式 */
 .hero {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4eaf5 100%);
-  padding: 60px 0;
+  background: radial-gradient(900px 500px at 75% 35%, rgba(224, 122, 95, 0.16) 0%, rgba(255, 247, 242, 0) 60%),
+    linear-gradient(135deg, #fff7f2 0%, #fff 100%);
+  padding: 72px 0;
 
   .container {
     max-width: 1200px;
@@ -573,18 +614,104 @@ $border-color: #e4e7ed;
         color: $text-secondary;
         margin-bottom: 30px;
       }
+
+      .learn-more-btn {
+        background: $primary-color;
+        border-color: $primary-color;
+        border-radius: 10px;
+        height: 44px;
+        padding: 0 22px;
+
+        &:hover {
+          opacity: 0.92;
+        }
+      }
     }
 
-    .hero-image {
-      width: 500px;
-      height: 300px;
-      border-radius: 8px;
+    .hero-media {
+      width: 580px;
+      max-width: 580px;
+    }
+
+    .hero-carousel {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 14px 34px rgba(61, 44, 35, 0.12);
+      border: 1px solid rgba(241, 227, 216, 0.9);
+      background: #fff;
+    }
+
+    .hero-slide {
+      height: 360px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 18px;
       overflow: hidden;
 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+      &.slide-1 {
+        background: radial-gradient(480px 260px at 30% 30%, rgba(242, 204, 143, 0.35) 0%, rgba(255, 255, 255, 0) 60%),
+          linear-gradient(135deg, rgba(224, 122, 95, 0.12) 0%, rgba(255, 247, 242, 0.2) 60%, rgba(255, 255, 255, 1) 100%);
+      }
+      &.slide-2 {
+        background: radial-gradient(480px 260px at 30% 30%, rgba(129, 178, 154, 0.28) 0%, rgba(255, 255, 255, 0) 60%),
+          linear-gradient(135deg, rgba(242, 204, 143, 0.16) 0%, rgba(255, 247, 242, 0.2) 60%, rgba(255, 255, 255, 1) 100%);
+      }
+      &.slide-3 {
+        background: radial-gradient(480px 260px at 30% 30%, rgba(224, 122, 95, 0.22) 0%, rgba(255, 255, 255, 0) 60%),
+          linear-gradient(135deg, rgba(129, 178, 154, 0.12) 0%, rgba(255, 247, 242, 0.2) 60%, rgba(255, 255, 255, 1) 100%);
+      }
+
+      .slide-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .slide-badge {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        color: $text-primary;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(241, 227, 216, 0.95);
+        backdrop-filter: blur(8px);
+        flex-shrink: 0;
+      }
+
+      .slide-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: $text-primary;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .slide-media {
+        flex: 1;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(241, 227, 216, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+      }
+
+      .slide-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        opacity: 0.98;
+        filter: drop-shadow(0 10px 18px rgba(61, 44, 35, 0.12));
+        user-select: none;
+        pointer-events: none;
       }
     }
   }
@@ -626,20 +753,21 @@ $border-color: #e4e7ed;
 
   .service-card {
     border: none;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 22px rgba(61, 44, 35, 0.08);
     transition: transform 0.3s, box-shadow 0.3s;
     padding: 30px;
     text-align: center;
+    border-radius: 14px;
 
     &:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 14px 30px rgba(61, 44, 35, 0.12);
     }
 
     .service-icon {
       width: 60px;
       height: 60px;
-      background-color: rgba(64, 158, 255, 0.1);
+      background-color: rgba(224, 122, 95, 0.12);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -667,7 +795,7 @@ $border-color: #e4e7ed;
 
 /* 服务流程样式 */
 .process {
-  background-color: $light-bg;
+  background-color: rgba(242, 204, 143, 0.12);
   padding: 80px 0;
 
   .container {
@@ -681,57 +809,89 @@ $border-color: #e4e7ed;
     margin-bottom: 50px;
   }
 
-  .process-steps {
-    max-width: 800px;
-    margin: 0 auto;
+  .process-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+  }
 
-    .el-step {
-      margin-bottom: 30px;
+  .process-card {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(241, 227, 216, 0.95);
+    border-radius: 16px;
+    padding: 18px 16px;
+    box-shadow: 0 10px 22px rgba(61, 44, 35, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(300px 140px at 20% 10%, rgba(224, 122, 95, 0.12) 0%, rgba(255, 255, 255, 0) 60%);
+      pointer-events: none;
+    }
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 30px rgba(61, 44, 35, 0.12);
+    }
+
+    .pc-top {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 10px;
+    }
 
-      .step-icon {
-        width: 40px;
-        height: 40px;
-        background-color: #409eff;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 20px;
-        flex-shrink: 0;
-      }
+    .pc-index {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: $text-primary;
+      background: rgba(242, 204, 143, 0.35);
+      border: 1px solid rgba(241, 227, 216, 0.95);
+    }
 
-      .el-step__content {
-        margin-left: 20px;
-      }
+    .pc-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(224, 122, 95, 0.12);
+      border: 1px solid rgba(241, 227, 216, 0.95);
 
-      .el-step__title {
+      :deep(.el-icon) {
+        color: $primary-color;
         font-size: 18px;
-        color: $text-primary;
-        margin-bottom: 5px;
       }
+    }
 
-      .el-step__description {
-        color: $text-secondary;
-        font-size: 14px;
-        line-height: 1.6;
-      }
+    .pc-title {
+      position: relative;
+      z-index: 1;
+      font-size: 16px;
+      font-weight: 700;
+      color: $text-primary;
+      margin-bottom: 6px;
+    }
 
-      .step-content {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-      }
-
-      .step-image {
-        width: 80px;
-        height: 80px;
-        object-fit: contain;
-        flex-shrink: 0;
-      }
+    .pc-desc {
+      position: relative;
+      z-index: 1;
+      color: $text-secondary;
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 42px;
     }
   }
 }
@@ -754,13 +914,14 @@ $border-color: #e4e7ed;
 
   .package-card {
     border: none;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 22px rgba(61, 44, 35, 0.08);
     transition: transform 0.3s, box-shadow 0.3s;
     overflow: hidden;
+    border-radius: 14px;
 
     &:hover {
       transform: translateY(-5px);
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 14px 30px rgba(61, 44, 35, 0.12);
     }
 
     .package-header {
@@ -802,18 +963,20 @@ $border-color: #e4e7ed;
       width: 80%;
       margin: 0 auto 20px;
       display: block;
+      border-radius: 10px;
+      height: 40px;
     }
   }
 
   .basic-package {
     .package-header {
-      background-color: #f0f7ff;
+      background-color: rgba(242, 204, 143, 0.25);
     }
   }
 
   .standard-package {
     .package-header {
-      background-color: #f6ffed;
+      background-color: rgba(129, 178, 154, 0.18);
     }
 
     .package-price {
@@ -823,7 +986,7 @@ $border-color: #e4e7ed;
 
   .premium-package {
     .package-header {
-      background-color: #fff7e8;
+      background-color: rgba(224, 122, 95, 0.12);
     }
 
     .package-price {
@@ -832,55 +995,9 @@ $border-color: #e4e7ed;
   }
 }
 
-/* 联系部分样式 */
-.contact {
-  background-color: $light-bg;
-  padding: 80px 0;
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-  }
-
-  .contact-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-    background-color: $white;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-  }
-
-  .contact-info {
-    .contact-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-
-      .el-icon {
-        margin-right: 10px;
-        color: $primary-color;
-      }
-    }
-  }
-
-  .contact-form {
-    .el-form-item {
-      margin-bottom: 20px;
-    }
-
-    .submit-btn {
-      width: 100%;
-      padding: 12px;
-    }
-  }
-}
-
 /* 页脚样式 */
 .footer {
-  background-color: #303133;
+  background-color: #3d2c23;
   color: $white;
   padding: 40px 0;
   text-align: center;
@@ -897,15 +1014,14 @@ $border-color: #e4e7ed;
     flex-direction: column;
     text-align: center;
 
-    .hero-image {
+    .hero-media {
       margin-top: 30px;
       width: 100%;
     }
   }
 
   .services-grid,
-  .packages-grid,
-  .contact-content {
+  .packages-grid {
     grid-template-columns: 1fr;
   }
 
@@ -919,6 +1035,10 @@ $border-color: #e4e7ed;
 
   .hero-text h1 {
     font-size: 32px;
+  }
+
+  .process .process-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
