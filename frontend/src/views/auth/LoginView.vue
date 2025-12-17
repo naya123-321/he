@@ -90,12 +90,13 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import type { FormItemRule } from "element-plus";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, type FormInstance } from "element-plus";
 import { login } from "@/api/user";
 import { useUserStore } from "@/store/user";
 
 const router = useRouter();
+const route = useRoute();
 const userStore = useUserStore();
 const loginFormRef = ref<FormInstance>();
 
@@ -159,6 +160,14 @@ const handleLogin = async () => {
       
       // 延迟跳转，让用户看到成功提示
       setTimeout(() => {
+        const redirect = (route.query.redirect as string) || "";
+        if (redirect) {
+          router.replace(redirect).catch(() => {
+            window.location.href = redirect;
+          });
+          return;
+        }
+
         if (role === 0) {
           // 宠主端 - 跳转到服务套餐页面
           router.push("/pet-owner/service-packages").catch(() => {

@@ -446,9 +446,8 @@ const goToPackage = (_packageType: string) => {
   // 检查用户是否已登录
   const token = sessionStorage.getItem("token");
   if (!token) {
-    // 未登录，跳转到登录页
-    ElMessage.warning("请先登录后再选择套餐");
-    router.push({ name: "Login" });
+    // 未登录：访客可先填写宠物信息，进入公开套餐页并获取推荐
+    router.push("/visitor/pet-info");
     return;
   }
 

@@ -10,6 +10,20 @@ const routes = [
     component: HomeView,
     meta: { requiresAuth: false },
   },
+  // 公开服务套餐页（访客可访问）
+  {
+    path: "/service-packages",
+    name: "PublicServicePackages",
+    component: () => import("@/views/pet-owner/ServicePackages.vue"),
+    meta: { requiresAuth: false },
+  },
+  // 访客信息采集（不需要登录）
+  {
+    path: "/visitor/pet-info",
+    name: "VisitorPetInfo",
+    component: () => import("@/views/visitor/PetInfoCollect.vue"),
+    meta: { requiresAuth: false },
+  },
   {
     path: "/login",
     name: "Login",
@@ -280,7 +294,12 @@ router.beforeEach((to: any, from: any, next: any) => {
   if (requiresAuth && !token) {
     // 需要登录但未登录，跳转到登录页
     console.log("需要登录但未登录，跳转到登录页");
-    next("/login");
+    next({
+      path: "/login",
+      query: {
+        redirect: to.fullPath,
+      },
+    });
   } else if (
     !requiresAuth &&
     token &&

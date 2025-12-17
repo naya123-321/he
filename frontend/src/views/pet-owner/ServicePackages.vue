@@ -7,6 +7,72 @@
       <p>我们提供多种服务套餐，根据您的需求和预算选择最适合的方案</p>
     </div>
 
+    <!-- 智能套餐推荐（访客无需登录） -->
+    <el-card class="smart-recommend-card" shadow="hover">
+      <template #header>
+        <div class="smart-header">
+          <div class="left">
+            <div class="title">智能套餐推荐</div>
+            <div class="sub">基于协同过滤 + 规则引擎（宠物类型 / 年龄 / 离世原因）</div>
+          </div>
+          <div class="right">
+            <el-button size="small" @click="goVisitorPetInfo">
+              {{ visitorProfile ? "修改信息" : "填写信息" }}
+            </el-button>
+            <el-button v-if="visitorProfile" size="small" @click="clearVisitorProfile">清除</el-button>
+          </div>
+        </div>
+      </template>
+
+      <div v-if="!visitorProfile" class="smart-empty">
+        <el-empty description="填写宠物信息后可获得更贴合的套餐推荐" />
+      </div>
+
+      <div v-else class="smart-body" v-loading="recoLoading">
+        <div class="smart-line">
+          根据您宠物的信息，为您推荐最适合的套餐：
+        </div>
+        <div class="smart-reco">
+          <span class="star">⭐</span>
+          <span class="label">推荐套餐：</span>
+          <span class="name">{{ recommendation?.recommendedPackageName || "（计算中）" }}</span>
+          <el-tag v-if="recommendation?.score != null" type="success" class="score">
+            推荐度{{ Math.round(recommendation.score) }}%
+          </el-tag>
+        </div>
+
+        <div class="smart-section" v-if="recommendation?.analysis?.length">
+          <div class="sec-title">📊 匹配分析：</div>
+          <ul class="sec-list">
+            <li v-for="(it, idx) in recommendation.analysis" :key="idx">• {{ it }}</li>
+          </ul>
+        </div>
+
+        <div class="smart-section">
+          <div class="sec-title">🔍 推荐算法：</div>
+          <div class="sec-text">
+            {{ recommendation?.algorithm || "基于协同过滤算法（相似用户）+ 简单规则引擎（特征匹配）" }}
+            <span v-if="recommendation?.similarUsers != null">
+              ，分析{{ recommendation.similarUsers }}个相似用户的选择
+            </span>
+          </div>
+          <el-alert
+            v-if="recommendation?.warning"
+            :title="recommendation.warning"
+            type="warning"
+            show-icon
+            class="warn"
+          />
+        </div>
+
+        <div class="smart-actions">
+          <el-button type="primary" @click="reloadRecommendation" :loading="recoLoading">
+            重新计算推荐
+          </el-button>
+        </div>
+      </div>
+    </el-card>
+
     <div v-loading="loading" class="packages-grid">
       <el-card
         v-for="pkg in servicePackages"
@@ -21,11 +87,11 @@
             <div class="header-left">
               <h3>{{ pkg.name }}</h3>
               <el-tag
-                :type="isRecommended(pkg) ? 'success' : 'info'"
+                :type="isSmartRecommended(pkg) ? 'success' : (isDbRecommended(pkg) ? 'warning' : 'info')"
                 size="small"
                 class="recommend-tag"
               >
-                {{ isRecommended(pkg) ? "推荐" : "标准" }}
+                {{ isSmartRecommended(pkg) ? "智能推荐" : (isDbRecommended(pkg) ? "推荐" : "标准") }}
               </el-tag>
             </div>
             <el-button
@@ -91,7 +157,7 @@
         size="large"
         @click="goToBookService"
       >
-        下一步，预约服务
+        {{ isLoggedIn ? "下一步，预约服务" : "登录后预约" }}
       </el-button>
     </div>
 
@@ -152,13 +218,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElEmpty, ElDialog } from "element-plus";
 import { Check, View, MoreFilled } from "@element-plus/icons-vue";
 import { serviceTypeApi, type ServiceTypeVO } from "@/api/order";
+import { recommendationApi, type VisitorPetProfile, type PackageRecommendationResult } from "@/api/recommendation";
 
 const router = useRouter();
+const route = useRoute();
 const selectedPackageId = ref<number | null>(null);
 const selectedPackage = ref<ServiceTypeVO | null>(null);
 const loading = ref(false);
@@ -167,6 +235,14 @@ const currentPackage = ref<ServiceTypeVO | null>(null);
 
 // 服务套餐数据（从API获取）
 const servicePackages = ref<ServiceTypeVO[]>([]);
+
+const isLoggedIn = !!sessionStorage.getItem("token");
+
+const visitorProfile = ref<VisitorPetProfile | null>(null);
+const recommendation = ref<PackageRecommendationResult | null>(null);
+const recoLoading = ref(false);
+
+const VISITOR_PROFILE_KEY = "visitorPetProfile";
 
 // 将服务流程字符串转换为特性列表
 const parseProcessToFeatures = (process?: string): string[] => {
@@ -188,15 +264,31 @@ const parseProcessToServices = (process?: string): Array<{ id: number; name: str
   }));
 };
 
-// 判断是否推荐（使用数据库字段）
-const isRecommended = (pkg: ServiceTypeVO): boolean => {
+// 判断是否推荐（数据库字段）
+const isDbRecommended = (pkg: ServiceTypeVO): boolean => {
   // 使用数据库中的 isRecommended 字段
   return pkg.isRecommended === true;
+};
+
+// 判断是否“智能推荐”
+const isSmartRecommended = (pkg: ServiceTypeVO): boolean => {
+  return !!recommendation.value?.recommendedPackageId && pkg.id === recommendation.value?.recommendedPackageId;
 };
 
 // 返回上一页
 const goBack = () => {
   router.back();
+};
+
+const goVisitorPetInfo = () => {
+  router.push("/visitor/pet-info");
+};
+
+const clearVisitorProfile = () => {
+  sessionStorage.removeItem(VISITOR_PROFILE_KEY);
+  visitorProfile.value = null;
+  recommendation.value = null;
+  ElMessage.success("已清除访客信息");
 };
 
 // 选择套餐
@@ -227,6 +319,15 @@ const goToBookService = () => {
     return;
   }
 
+  if (!isLoggedIn) {
+    ElMessage.info("请先登录后再预约服务");
+    const redirect = `/pet-owner/book-service?packageId=${encodeURIComponent(
+      String(selectedPackageId.value)
+    )}&packageName=${encodeURIComponent(selectedPackage.value.name || "")}`;
+    router.push({ path: "/login", query: { redirect } });
+    return;
+  }
+
   // 将选中的套餐信息传递给预约页面
   router.push({
     path: "/pet-owner/book-service",
@@ -235,6 +336,65 @@ const goToBookService = () => {
       packageName: selectedPackage.value.name,
     },
   });
+};
+
+const applySmartSelection = () => {
+  const rid = recommendation.value?.recommendedPackageId;
+  if (!rid) return;
+  const pkg = servicePackages.value.find(p => p.id === rid);
+  if (!pkg) return;
+  selectedPackageId.value = pkg.id || null;
+  selectedPackage.value = pkg;
+};
+
+const loadVisitorProfile = () => {
+  const raw = sessionStorage.getItem(VISITOR_PROFILE_KEY);
+  if (!raw) {
+    visitorProfile.value = null;
+    return;
+  }
+  try {
+    const v = JSON.parse(raw) as VisitorPetProfile;
+    if (v && typeof v === "object") {
+      visitorProfile.value = {
+        petType: v.petType || "",
+        petAge: Number.isFinite(v.petAge) ? v.petAge : 0,
+        deathCause: v.deathCause || "",
+      };
+    }
+  } catch {
+    visitorProfile.value = null;
+  }
+};
+
+const loadRecommendation = async () => {
+  if (!visitorProfile.value) return;
+  recoLoading.value = true;
+  try {
+    const res: any = await recommendationApi.getPackageRecommendation({
+      petType: visitorProfile.value.petType,
+      petAge: visitorProfile.value.petAge,
+      deathCause: visitorProfile.value.deathCause,
+    });
+    recommendation.value = res?.data || null;
+    applySmartSelection();
+  } catch (e: any) {
+    recommendation.value = {
+      warning: e?.message || "推荐服务暂不可用，请稍后重试",
+    };
+  } finally {
+    recoLoading.value = false;
+  }
+};
+
+const reloadRecommendation = async () => {
+  await loadRecommendation();
+  if (recommendation.value?.recommendedPackageId) {
+    const pkg = servicePackages.value.find(p => p.id === recommendation.value?.recommendedPackageId);
+    if (pkg) {
+      ElMessage.success(`已为您标记智能推荐：${pkg.name}`);
+    }
+  }
 };
 
 // 加载服务套餐列表
@@ -250,6 +410,8 @@ const loadServicePackages = async () => {
       if (servicePackages.value.length === 0) {
         ElMessage.warning("当前没有可用的服务套餐，请联系管理员");
       }
+      // 若推荐已到位，补一次默认选中
+      applySmartSelection();
     } else {
       ElMessage.error("获取服务套餐失败");
       console.error("服务套餐API响应格式错误:", res);
@@ -265,6 +427,13 @@ const loadServicePackages = async () => {
 // 页面加载时获取服务套餐列表
 onMounted(() => {
   loadServicePackages();
+  loadVisitorProfile();
+  // 如果带 recommend=1 或者已保存访客信息，则拉取推荐
+  if (route.query.recommend === "1") {
+    loadRecommendation();
+  } else if (sessionStorage.getItem(VISITOR_PROFILE_KEY)) {
+    loadRecommendation();
+  }
 });
 </script>
 
@@ -300,6 +469,87 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 30px;
   margin-bottom: 50px;
+}
+
+.smart-recommend-card {
+  border-radius: 12px;
+  margin: 0 0 26px;
+  :deep(.el-card__header) {
+    background: linear-gradient(135deg, #f7f1ff 0%, #eef6ff 100%);
+  }
+}
+
+.smart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  .left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #303133;
+    }
+    .sub {
+      font-size: 12px;
+      color: #909399;
+    }
+  }
+  .right {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+.smart-body {
+  .smart-line {
+    color: #606266;
+    margin-bottom: 10px;
+  }
+  .smart-reco {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 16px;
+    .name {
+      font-weight: 700;
+      color: #303133;
+    }
+    .score {
+      margin-left: 8px;
+    }
+  }
+  .smart-section {
+    margin-top: 14px;
+    .sec-title {
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 6px;
+    }
+    .sec-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #606266;
+      li {
+        line-height: 1.8;
+      }
+    }
+    .sec-text {
+      color: #606266;
+      line-height: 1.8;
+    }
+    .warn {
+      margin-top: 10px;
+    }
+  }
+  .smart-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+  }
 }
 
 .package-card {
