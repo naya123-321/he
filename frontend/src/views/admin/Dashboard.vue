@@ -117,8 +117,68 @@
         </el-card>
       </el-col>
 
-      <!-- 服务类型分布 -->
+      <!-- ARIMA 未来三天预测 -->
       <el-col :xs="24" :lg="12">
+        <el-card shadow="hover" class="chart-card forecast-card">
+          <template #header>
+            <div class="card-header">
+              <h3>未来3天预测</h3>
+              <el-tag
+                :type="forecastMeta.modelType === 'ARIMA' ? 'warning' : 'info'"
+                effect="light"
+                size="small"
+              >
+                {{ forecastMeta.modelType === 'ARIMA' ? 'ARIMA' : '降级预测' }}
+              </el-tag>
+            </div>
+          </template>
+          <div class="forecast-container" v-loading="forecastLoading">
+            <div class="forecast-subtitle">
+              {{ forecastMeta.modelType === 'ARIMA' ? '基于ARIMA时间序列算法' : '当前为降级预测（7日均值）' }}
+            </div>
+
+            <div class="forecast-items">
+              <div v-for="item in forecastItems" :key="item.date" class="forecast-item">
+                <div class="fi-date">{{ item.date }}</div>
+                <div class="fi-main">
+                  <span class="fi-range">{{ item.range }}</span>
+                  <span class="fi-unit">单</span>
+                </div>
+                <div class="fi-conf">置信度{{ item.confidence }}%</div>
+              </div>
+            </div>
+
+            <div class="forecast-note-title">算法说明：</div>
+            <ul class="forecast-notes">
+              <li>使用 ARIMA(p,d,q) 模型</li>
+              <li>基于过去{{ forecastMeta.historyDays }}天订单数据训练</li>
+              <li v-if="forecastMeta.generatedAt">更新时间：{{ forecastMeta.generatedAt }}</li>
+            </ul>
+
+            <el-alert
+              v-if="forecastMeta.warning && forecastMeta.modelType !== 'ARIMA'"
+              class="forecast-alert"
+              type="warning"
+              :closable="true"
+              show-icon
+              :title="forecastMeta.warning"
+            >
+              <template #default>
+                <div class="forecast-alert-actions">
+                  <el-button size="small" type="primary" @click="retryArima">
+                    重试ARIMA
+                  </el-button>
+                </div>
+              </template>
+            </el-alert>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 服务类型分布（下移） -->
+    <el-row :gutter="20" class="charts-row">
+      <el-col :xs="24">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <div class="card-header">
@@ -129,7 +189,7 @@
             <div
               ref="serviceTypeChartContainer"
               v-loading="serviceTypeChartLoading"
-              style="width: 100%; height: 300px;"
+              style="width: 100%; height: 320px;"
             ></div>
           </div>
         </el-card>
@@ -238,6 +298,22 @@ import { getUserList } from "@/api/user";
 import * as echarts from "echarts";
 
 const router = useRouter();
+
+type ForecastItem = {
+  date: string; // MM-DD
+  range: string; // "12 (10-14)"
+  confidence: number; // 95
+};
+
+const pad2 = (n: number) => (n < 10 ? `0${n}` : String(n));
+const formatMMDD = (d: Date) => `${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const addDays = (d: Date, days: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
+
+// 预测结果展示
+const forecastItems = ref<ForecastItem[]>([]);
+
+const forecastLoading = ref(false);
+const forecastMeta = ref<{ historyDays: number; generatedAt?: string; warning?: string; modelType?: string }>({ historyDays: 30 });
 
 // 统计数据
 const totalOrders = ref(0);
@@ -391,11 +467,75 @@ const processOrder = (task: any) => {
 
 // 页面加载时获取数据
 onMounted(async () => {
+  await loadOrderForecast();
   await loadDashboardData();
   await nextTick();
   await loadOrderTrend();
   await loadServiceTypeDistribution();
 });
+
+import { dashboardApi, type OrderForecastResult } from "@/api/dashboard";
+
+const loadOrderForecast = async () => {
+  forecastLoading.value = true;
+  try {
+    const res = await dashboardApi.getOrderForecast(3, 30, false);
+    const data = res.data as OrderForecastResult;
+    forecastMeta.value = {
+      historyDays: data.historyDays || 30,
+      generatedAt: data.generatedAt,
+      warning: data.warning,
+      modelType: data.model?.type || (data.warning ? "FALLBACK" : "ARIMA"),
+    };
+    const conf = Math.round(((data.model?.confidence ?? 0.95) as number) * 100);
+    forecastItems.value = (data.forecast || []).slice(0, 3).map((p) => {
+      const d = new Date(p.date);
+      const mmdd = `${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      const range = (p.lower != null && p.upper != null)
+        ? `${p.predicted} (${p.lower}-${p.upper})`
+        : String(p.predicted);
+      return { date: mmdd, range, confidence: conf };
+    });
+  } catch (e) {
+    // 失败时给一个温和的占位
+    const base = new Date();
+    forecastItems.value = [1, 2, 3].map((i) => ({
+      date: formatMMDD(addDays(base, i)),
+      range: "--",
+      confidence: 95,
+    }));
+  } finally {
+    forecastLoading.value = false;
+  }
+};
+
+const retryArima = async () => {
+  forecastLoading.value = true;
+  try {
+    // 强制刷新缓存，重新尝试跑 ARIMA
+    const res = await dashboardApi.getOrderForecast(3, 30, true);
+    const data = res.data as OrderForecastResult;
+    forecastMeta.value = {
+      historyDays: data.historyDays || 30,
+      generatedAt: data.generatedAt,
+      warning: data.warning,
+      modelType: data.model?.type || (data.warning ? "FALLBACK" : "ARIMA"),
+    };
+    const conf = Math.round(((data.model?.confidence ?? 0.95) as number) * 100);
+    forecastItems.value = (data.forecast || []).slice(0, 3).map((p) => {
+      const d = new Date(p.date);
+      const mmdd = `${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      const range = (p.lower != null && p.upper != null)
+        ? `${p.predicted} (${p.lower}-${p.upper})`
+        : String(p.predicted);
+      return { date: mmdd, range, confidence: conf };
+    });
+  } catch (e) {
+    // ignore
+  } finally {
+    forecastLoading.value = false;
+  }
+};
 
 onUnmounted(() => {
   // 移除resize监听
@@ -911,6 +1051,89 @@ const renderServiceTypeChart = (distribution: any[], totalOrders: number) => {
 .chart-container {
   flex: 1;
   padding: 20px 0;
+}
+
+.forecast-card {
+  .forecast-container {
+    padding: 6px 0 14px;
+  }
+
+  .forecast-subtitle {
+    font-size: 13px;
+    color: #606266;
+    margin-bottom: 12px;
+  }
+
+  .forecast-items {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .forecast-item {
+    border: 1px solid #ebeef5;
+    border-radius: 10px;
+    padding: 12px 12px;
+    background: #fff;
+  }
+
+  .fi-date {
+    font-size: 12px;
+    color: #909399;
+    margin-bottom: 8px;
+  }
+
+  .fi-main {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .fi-range {
+    font-size: 16px;
+    font-weight: 700;
+    color: #303133;
+  }
+
+  .fi-unit {
+    font-size: 12px;
+    color: #606266;
+  }
+
+  .fi-conf {
+    font-size: 12px;
+    color: #e6a23c;
+    font-weight: 600;
+  }
+
+  .forecast-note-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #303133;
+    margin-bottom: 6px;
+  }
+
+  .forecast-notes {
+    margin: 0;
+    padding-left: 18px;
+    color: #606266;
+    font-size: 12px;
+
+    li {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+  }
+
+  .forecast-alert {
+    margin-top: 12px;
+  }
+
+  .forecast-alert-actions {
+    margin-top: 8px;
+  }
 }
 
 .placeholder-chart {
