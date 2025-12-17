@@ -178,7 +178,20 @@
           <el-input v-model="editForm.petName" maxlength="50" show-word-limit />
         </el-form-item>
         <el-form-item label="宠物类型" prop="petType">
-          <el-input v-model="editForm.petType" maxlength="50" show-word-limit />
+          <el-select
+            v-model="editForm.petType"
+            placeholder="请选择宠物类型"
+            style="width: 100%"
+            filterable
+            allow-create
+            default-first-option
+          >
+            <el-option-group v-for="g in PET_TYPE_GROUPS" :key="g.label" :label="g.label">
+              <el-option v-for="o in g.options" :key="o.value" :label="o.label" :value="o.value">
+                <span style="float: left">{{ o.emoji ? `${o.emoji} ` : "" }}{{ o.label }}</span>
+              </el-option>
+            </el-option-group>
+          </el-select>
         </el-form-item>
         <el-form-item label="骨灰盒编号" prop="urnNo">
           <el-input v-model="editForm.urnNo" maxlength="50" show-word-limit />
@@ -217,6 +230,7 @@ import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
 import { Refresh, Search } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import { urnStorageApi, type UrnStorageCreateDTO, type UrnStorageVO } from "@/api/urnStorage";
+import { PET_TYPE_GROUPS } from "@/constants/petTypes";
 
 const router = useRouter();
 function goBack() {

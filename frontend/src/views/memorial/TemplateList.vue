@@ -295,12 +295,11 @@
 
         <el-form-item label="宠物类型" prop="petType">
           <el-select v-model="createForm.petType" placeholder="请选择宠物类型">
-            <el-option label="狗" value="dog" />
-            <el-option label="猫" value="cat" />
-            <el-option label="鸟" value="bird" />
-            <el-option label="兔子" value="rabbit" />
-            <el-option label="仓鼠" value="hamster" />
-            <el-option label="其他" value="other" />
+            <el-option-group v-for="g in PET_TYPE_GROUPS" :key="g.label" :label="g.label">
+              <el-option v-for="o in g.options" :key="o.value" :label="o.label" :value="o.value">
+                <span style="float: left">{{ o.emoji ? `${o.emoji} ` : "" }}{{ o.label }}</span>
+              </el-option>
+            </el-option-group>
           </el-select>
         </el-form-item>
 
@@ -344,6 +343,7 @@ import dayjs from "dayjs";
 import { memorialApi } from "@/api/memorial";
 import { orderApi } from "@/api/order";
 import type { TemplateVO } from "@/api/memorial";
+import { PET_TYPE_GROUPS } from "@/constants/petTypes";
 
 // 路由实例
 const router = useRouter();

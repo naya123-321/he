@@ -4,6 +4,9 @@ export type VisitorPetProfile = {
   petType: string;
   petAge: number;
   deathCause: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  participants?: number;
 };
 
 export type PackageRecommendationRequest = VisitorPetProfile & {

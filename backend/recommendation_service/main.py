@@ -43,6 +43,9 @@ class Profile(BaseModel):
     # 兼容前端/后端可能传入的 float/str（例如 12.0 / "12"）
     petAge: int = Field(..., ge=0, le=30, description="宠物年龄（岁）")
     deathCause: str = Field(..., description="离世原因：disease/accident/aging/other 或中文")
+    budgetMin: Optional[float] = Field(default=None, ge=0, description="预算下限（元）")
+    budgetMax: Optional[float] = Field(default=None, ge=0, description="预算上限（元）")
+    participants: Optional[int] = Field(default=None, ge=1, le=50, description="参与告别人数")
 
     @field_validator("petAge", mode="before")
     @classmethod
@@ -65,6 +68,46 @@ class Profile(BaseModel):
             except Exception:
                 return v
         return v
+
+    @field_validator("budgetMin", "budgetMax", mode="before")
+    @classmethod
+    def _coerce_budget(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, bool):
+            return float(int(v))
+        if isinstance(v, (int, float)):
+            return float(v)
+        if isinstance(v, str):
+            s = v.strip()
+            if s == "":
+                return None
+            try:
+                return float(s)
+            except Exception:
+                return None
+        return None
+
+    @field_validator("participants", mode="before")
+    @classmethod
+    def _coerce_participants(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, bool):
+            return int(v)
+        if isinstance(v, int):
+            return v
+        if isinstance(v, float):
+            return int(round(v))
+        if isinstance(v, str):
+            s = v.strip()
+            if s == "":
+                return None
+            try:
+                return int(float(s))
+            except Exception:
+                return None
+        return None
 
 
 class RecommendRequest(BaseModel):
@@ -240,6 +283,22 @@ def _rule_score(target: Profile, st: Dict[str, Any]) -> float:
     else:
         score += 0.08
 
+    # 预算匹配（尽量不超预算）
+    if price is not None and (target.budgetMin is not None or target.budgetMax is not None):
+        if target.budgetMin is not None and price < float(target.budgetMin):
+            score -= 0.10
+        elif target.budgetMax is not None and price > float(target.budgetMax):
+            score -= 0.18
+        else:
+            score += 0.12
+
+    # 人数匹配：人数多更偏向更长时长
+    if target.participants is not None and int(target.participants) >= 4:
+        if duration is not None and duration >= 90:
+            score += 0.12
+        elif duration is not None and duration >= 75:
+            score += 0.08
+
     return min(1.0, max(0.0, score))
 
 
@@ -332,6 +391,12 @@ def recommend(req: RecommendRequest) -> RecommendResponse:
         f"宠物年龄：{profile.petAge}岁 → 建议选择更完整的告别与纪念服务" if profile.petAge >= 8 else f"宠物年龄：{profile.petAge}岁 → 建议选择舒适且高性价比的服务组合",
         f"离世原因：{_cause_text(profile.deathCause)} → 需要更温馨的告别仪式" if _norm_cause(profile.deathCause) == "disease" else f"离世原因：{_cause_text(profile.deathCause)} → 建议更平稳的告别流程",
     ]
+    if profile.participants is not None:
+        analysis.append(f"参与告别人数：{int(profile.participants)}人 → 建议选择更从容的告别流程与时间安排")
+    if profile.budgetMin is not None or profile.budgetMax is not None:
+        bmin = int(profile.budgetMin or 0)
+        bmax = "不限" if profile.budgetMax is None else str(int(profile.budgetMax))
+        analysis.append(f"预算范围：{bmin} - {bmax}元 → 优先匹配预算内的套餐")
 
     score_pct = max(1.0, min(100.0, best_score * 100.0))
     algo = f"基于协同过滤算法，分析{similar_users_count}个相似用户的选择"

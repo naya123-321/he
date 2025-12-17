@@ -60,47 +60,9 @@
           filterable
           @change="handlePetTypeChange"
         >
-          <el-option-group label="常见宠物">
-            <el-option label="猫" value="cat">
-              <span style="float: left">🐱 猫</span>
-            </el-option>
-            <el-option label="狗" value="dog">
-              <span style="float: left">🐶 狗</span>
-            </el-option>
-            <el-option label="兔子" value="rabbit">
-              <span style="float: left">🐰 兔子</span>
-            </el-option>
-            <el-option label="仓鼠" value="hamster">
-              <span style="float: left">🐹 仓鼠</span>
-            </el-option>
-            <el-option label="鸟" value="bird">
-              <span style="float: left">🐦 鸟</span>
-            </el-option>
-          </el-option-group>
-          <el-option-group label="其他宠物">
-            <el-option label="龙猫" value="chinchilla">
-              <span style="float: left">龙猫</span>
-            </el-option>
-            <el-option label="豚鼠" value="guinea-pig">
-              <span style="float: left">豚鼠</span>
-            </el-option>
-            <el-option label="刺猬" value="hedgehog">
-              <span style="float: left">🦔 刺猬</span>
-            </el-option>
-            <el-option label="荷兰猪" value="guinea-pig-2">
-              <span style="float: left">荷兰猪</span>
-            </el-option>
-            <el-option label="雪貂" value="ferret">
-              <span style="float: left">雪貂</span>
-            </el-option>
-            <el-option label="爬行动物" value="reptile">
-              <span style="float: left">🦎 爬行动物</span>
-            </el-option>
-            <el-option label="鱼类" value="fish">
-              <span style="float: left">🐠 鱼类</span>
-            </el-option>
-            <el-option label="其他" value="other">
-              <span style="float: left">其他</span>
+          <el-option-group v-for="g in PET_TYPE_GROUPS" :key="g.label" :label="g.label">
+            <el-option v-for="o in g.options" :key="o.value" :label="o.label" :value="o.value">
+              <span style="float: left">{{ o.emoji ? `${o.emoji} ` : "" }}{{ o.label }}</span>
             </el-option>
           </el-option-group>
         </el-select>
@@ -235,6 +197,7 @@ import { useOrderStore } from "@/store/order";
 import { serviceTypeApi, type ServiceTypeVO } from "@/api/order";
 import type { OrderCreateDTO } from "@/api/order";
 import { specialRequestApi } from "@/api/specialRequest";
+import { PET_TYPE_GROUPS } from "@/constants/petTypes";
 
 const router = useRouter();
 const route = useRoute();
@@ -272,12 +235,6 @@ const breedSuggestions: Record<string, string[]> = {
   hamster: ["金丝熊", "仓鼠", "三线", "一线", "其他"],
   bird: ["鹦鹉", "文鸟", "金丝雀", "画眉", "其他"],
   chinchilla: ["标准灰", "米色", "白色", "其他"],
-  "guinea-pig": ["短毛", "长毛", "其他"],
-  hedgehog: ["非洲迷你刺猬", "其他"],
-  "guinea-pig-2": ["短毛", "长毛", "其他"],
-  ferret: ["标准色", "其他"],
-  reptile: ["蜥蜴", "蛇", "龟", "其他"],
-  fish: ["金鱼", "热带鱼", "其他"],
   other: [],
 };
 

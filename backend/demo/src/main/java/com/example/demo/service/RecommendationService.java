@@ -102,6 +102,9 @@ public class RecommendationService {
             profile.put("petType", dto.getPetType());
             profile.put("petAge", dto.getPetAge());
             profile.put("deathCause", dto.getDeathCause());
+            profile.put("budgetMin", dto.getBudgetMin());
+            profile.put("budgetMax", dto.getBudgetMax());
+            profile.put("participants", dto.getParticipants());
             payload.put("profile", profile);
             payload.put("orders", orderRows);
             payload.put("serviceTypes", serviceTypes);
@@ -420,6 +423,26 @@ public class RecommendationService {
             score += 6;
         }
 
+        // budget -> 预算适配
+        Double min = dto.getBudgetMin();
+        Double max = dto.getBudgetMax();
+        if (s.getPrice() != null && (min != null || max != null)) {
+            if (min != null && s.getPrice() < min) {
+                score -= 8;
+            } else if (max != null && s.getPrice() > max) {
+                score -= 12;
+            } else {
+                score += 10;
+            }
+        }
+
+        // participants -> 参与人数较多倾向更长服务时长/更完整流程
+        Integer participants = dto.getParticipants();
+        if (participants != null && participants >= 4) {
+            if (s.getDuration() != null && s.getDuration() >= 90) score += 10;
+            else if (s.getDuration() != null && s.getDuration() >= 75) score += 6;
+        }
+
         return Math.min(50.0, score);
     }
 
@@ -443,6 +466,9 @@ public class RecommendationService {
         String petTypeText = petTypeText(dto.getPetType());
         String causeText = deathCauseText(dto.getDeathCause());
         Integer age = dto.getPetAge();
+        Integer participants = dto.getParticipants();
+        Double min = dto.getBudgetMin();
+        Double max = dto.getBudgetMax();
 
         String dur = best.getDuration() == null ? "适中" : (best.getDuration() + "分钟");
         a.add("宠物类型：" + petTypeText + " → 适合" + dur + "服务");
@@ -451,6 +477,12 @@ public class RecommendationService {
             else a.add("宠物年龄：" + age + "岁 → 建议选择舒适且高性价比的服务组合");
         }
         a.add("离世原因：" + causeText + " → 侧重更温馨的告别仪式与陪伴体验");
+        if (participants != null) {
+            a.add("参与告别人数：" + participants + "人 → 建议选择更从容的告别流程与时间安排");
+        }
+        if (min != null || max != null) {
+            a.add("预算范围：" + (min == null ? "0" : String.valueOf(Math.round(min))) + " - " + (max == null ? "不限" : String.valueOf(Math.round(max))) + "元 → 优先匹配预算内的套餐");
+        }
         return a;
     }
 

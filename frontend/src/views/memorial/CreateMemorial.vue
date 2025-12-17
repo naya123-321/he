@@ -286,12 +286,11 @@
                   style="width: 100%"
                   size="large"
                 >
-                  <el-option label="猫" value="cat" />
-                  <el-option label="狗" value="dog" />
-                  <el-option label="鸟" value="bird" />
-                  <el-option label="兔子" value="rabbit" />
-                  <el-option label="仓鼠" value="hamster" />
-                  <el-option label="其他" value="other" />
+                  <el-option-group v-for="g in PET_TYPE_GROUPS" :key="g.label" :label="g.label">
+                    <el-option v-for="o in g.options" :key="o.value" :label="o.label" :value="o.value">
+                      <span style="float: left">{{ o.emoji ? `${o.emoji} ` : "" }}{{ o.label }}</span>
+                    </el-option>
+                  </el-option-group>
                 </el-select>
               </el-form-item>
             </el-col>
@@ -467,6 +466,7 @@ import { memorialApi, type TemplateVO, type MemorialCreateDTO } from "@/api/memo
 import request from "@/api/request";
 import { orderApi, type OrderVO } from "@/api/order";
 import type { UploadFile } from "element-plus";
+import { PET_TYPE_GROUPS, getPetTypeLabel } from "@/constants/petTypes";
 
 // 定义事件
 const emit = defineEmits<{
@@ -620,15 +620,7 @@ function getTemplateCover(template: any): string | null {
 
 // 获取宠物类型名称
 const getPetTypeName = (type: string) => {
-  const typeMap: Record<string, string> = {
-    cat: "猫",
-    dog: "狗",
-    bird: "鸟",
-    rabbit: "兔子",
-    hamster: "仓鼠",
-    other: "其他",
-  };
-  return typeMap[type] || type;
+  return getPetTypeLabel(type) || type;
 };
 
 // 返回上一页

@@ -360,6 +360,9 @@ const loadVisitorProfile = () => {
         petType: v.petType || "",
         petAge: Number.isFinite(v.petAge) ? v.petAge : 0,
         deathCause: v.deathCause || "",
+        budgetMin: (v as any).budgetRange?.[0],
+        budgetMax: (v as any).budgetRange?.[1],
+        participants: (v as any).participants,
       };
     }
   } catch {
@@ -375,6 +378,9 @@ const loadRecommendation = async () => {
       petType: visitorProfile.value.petType,
       petAge: visitorProfile.value.petAge,
       deathCause: visitorProfile.value.deathCause,
+      budgetMin: visitorProfile.value.budgetMin,
+      budgetMax: visitorProfile.value.budgetMax,
+      participants: visitorProfile.value.participants,
     });
     recommendation.value = res?.data || null;
     applySmartSelection();

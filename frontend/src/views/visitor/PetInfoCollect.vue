@@ -15,11 +15,11 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="92px" class="form">
         <el-form-item label="宠物类型" prop="petType">
           <el-select v-model="form.petType" placeholder="请选择宠物类型" filterable>
-            <el-option label="猫" value="cat" />
-            <el-option label="小型犬" value="dog_small" />
-            <el-option label="中型犬" value="dog_medium" />
-            <el-option label="大型犬" value="dog_large" />
-            <el-option label="其他" value="other" />
+            <el-option-group v-for="g in PET_TYPE_GROUPS" :key="g.label" :label="g.label">
+              <el-option v-for="o in g.options" :key="o.value" :label="o.label" :value="o.value">
+                <span style="float: left">{{ o.emoji ? `${o.emoji} ` : "" }}{{ o.label }}</span>
+              </el-option>
+            </el-option-group>
           </el-select>
         </el-form-item>
 
@@ -35,6 +35,27 @@
             <el-option label="自然衰老" value="aging" />
             <el-option label="其他" value="other" />
           </el-select>
+        </el-form-item>
+
+        <el-form-item label="预算范围" prop="budgetRange">
+          <div class="budget-row">
+            <el-slider
+              v-model="form.budgetRange"
+              range
+              :min="0"
+              :max="5000"
+              :step="100"
+              show-input
+            />
+            <div class="budget-text">
+              {{ form.budgetRange[0] }} - {{ form.budgetRange[1] }} 元
+            </div>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="告别人数" prop="participants">
+          <el-input-number v-model="form.participants" :min="1" :max="50" controls-position="right" />
+          <span class="hint">人</span>
         </el-form-item>
 
         <el-form-item class="actions">
@@ -56,11 +77,14 @@
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, type FormInstance, type FormItemRule } from "element-plus";
+import { PET_TYPE_GROUPS } from "@/constants/petTypes";
 
 type VisitorPetProfile = {
   petType: string;
   petAge: number;
   deathCause: string;
+  budgetRange: [number, number];
+  participants: number;
 };
 
 const router = useRouter();
@@ -71,12 +95,16 @@ const form = reactive<VisitorPetProfile>({
   petType: "",
   petAge: 0,
   deathCause: "",
+  budgetRange: [0, 2000],
+  participants: 1,
 });
 
 const rules: Record<string, FormItemRule[]> = {
   petType: [{ required: true, message: "请选择宠物类型", trigger: "change" }],
   petAge: [{ required: true, message: "请输入宠物年龄", trigger: "change" }],
   deathCause: [{ required: true, message: "请选择离世原因", trigger: "change" }],
+  budgetRange: [{ required: true, message: "请选择预算范围", trigger: "change" }],
+  participants: [{ required: true, message: "请输入参与告别人数", trigger: "change" }],
 };
 
 const STORAGE_KEY = "visitorPetProfile";
@@ -87,6 +115,8 @@ const reset = () => {
   form.petType = "";
   form.petAge = 0;
   form.deathCause = "";
+  form.budgetRange = [0, 2000];
+  form.participants = 1;
 };
 
 const submit = async () => {
@@ -115,6 +145,17 @@ onMounted(() => {
       form.petType = v.petType || "";
       form.petAge = Number.isFinite(v.petAge) ? v.petAge : 0;
       form.deathCause = v.deathCause || "";
+      if (Array.isArray((v as any).budgetRange) && (v as any).budgetRange.length === 2) {
+        const a0 = Number((v as any).budgetRange[0]);
+        const a1 = Number((v as any).budgetRange[1]);
+        if (Number.isFinite(a0) && Number.isFinite(a1)) {
+          form.budgetRange = [a0, a1];
+        }
+      }
+      const p = Number((v as any).participants);
+      if (Number.isFinite(p) && p >= 1) {
+        form.participants = p;
+      }
     }
   } catch {
     // ignore
@@ -155,6 +196,15 @@ onMounted(() => {
 
 .hint {
   margin-left: 8px;
+  color: #909399;
+}
+
+.budget-row {
+  width: 100%;
+}
+.budget-text {
+  margin-top: 6px;
+  font-size: 12px;
   color: #909399;
 }
 
