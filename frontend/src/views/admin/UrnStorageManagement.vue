@@ -77,7 +77,6 @@
       <el-card shadow="never">
         <el-table v-loading="loading" :data="list" stripe border style="width: 100%">
           <el-table-column type="index" label="序号" width="60" align="center" />
-          <el-table-column prop="id" label="ID" width="90" />
           <el-table-column prop="orderNo" label="订单号" min-width="170" show-overflow-tooltip />
           <el-table-column label="宠主" min-width="160">
             <template #default="{ row }">

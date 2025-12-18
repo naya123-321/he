@@ -50,7 +50,7 @@
           <div class="stat-content">
             <div class="stat-info">
               <div class="stat-value">{{ totalMemorials }}</div>
-              <div class="stat-label">纪念册总数</div>
+              <div class="stat-label">已审核纪念册</div>
             </div>
             <el-icon class="stat-icon"><Picture /></el-icon>
           </div>
@@ -295,6 +295,7 @@ import { ref, reactive, onMounted, computed, nextTick, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { orderApi } from "@/api/order";
 import { getUserList } from "@/api/user";
+import { memorialApi } from "@/api/memorial";
 import * as echarts from "echarts";
 
 const router = useRouter();
@@ -562,8 +563,8 @@ onUnmounted(() => {
 // 加载仪表盘数据
 const loadDashboardData = async () => {
   try {
-    // 并行获取订单和用户数据
-    const [orderRes, userRes] = await Promise.all([
+    // 并行获取订单、用户和纪念册数据
+    const [orderRes, userRes, memorialRes] = await Promise.all([
       orderApi.getOrderList({
         pageNum: 1,
         pageSize: 100, // 获取足够多的订单用于统计
@@ -572,6 +573,11 @@ const loadDashboardData = async () => {
         pageNum: 1,
         pageSize: 100, // 获取足够多的用户用于统计
       }).catch(() => null), // 如果获取用户列表失败，继续执行
+      memorialApi.getMemorialList({
+        designStatus: 60, // 管理员审核通过的纪念册
+        pageNum: 1,
+        pageSize: 1, // 只需要总数，不需要具体数据
+      }).catch(() => null), // 如果获取纪念册列表失败，继续执行
     ]);
     
     // 处理订单数据
@@ -622,8 +628,12 @@ const loadDashboardData = async () => {
       totalUsers.value = userRes.data.total || userRes.data.records.length;
     }
     
-    // 纪念册数据暂时设为0，后续可以添加纪念册API
-    totalMemorials.value = 0;
+    // 处理纪念册数据：获取审核通过的纪念册数量（designStatus === 60）
+    if (memorialRes && memorialRes.code === 200 && memorialRes.data) {
+      totalMemorials.value = memorialRes.data.total || 0;
+    } else {
+      totalMemorials.value = 0;
+    }
   } catch (error) {
     console.error("加载仪表盘数据失败:", error);
   }

@@ -13,7 +13,7 @@
         <div class="smart-header">
           <div class="left">
             <div class="title">智能套餐推荐</div>
-            <div class="sub">基于协同过滤 + 规则引擎（宠物类型 / 年龄 / 离世原因）</div>
+            <div class="sub">基于协同过滤 + 规则引擎</div>
           </div>
           <div class="right">
             <el-button size="small" @click="goVisitorPetInfo">
