@@ -2,189 +2,193 @@
   <div class="book-service-container">
     <el-page-header @back="goBack" content="预约服务" />
 
-    <div class="booking-intro">
-      <h2>预约服务时间</h2>
-      <p>请选择合适的服务时间，并填写宠物信息</p>
-    </div>
+    <div class="booking-main-card">
+      <div class="booking-intro">
+        <h2>预约服务时间</h2>
+        <p>请选择合适的服务时间，并填写宠物信息，我们会为爱宠安排一个庄重而温暖的告别仪式。</p>
+      </div>
 
-    <el-form
-      ref="bookingFormRef"
-      :model="bookingForm"
-      :rules="bookingRules"
-      class="booking-form"
-    >
-      <!-- 服务套餐信息 -->
-      <el-form-item>
-        <el-card shadow="hover">
-          <div class="package-info">
-            <h3>已选择套餐：{{ selectedPackageName }}</h3>
-            <p>套餐ID：{{ selectedPackageId }}</p>
-          </div>
-        </el-card>
-      </el-form-item>
+      <el-form
+        ref="bookingFormRef"
+        :model="bookingForm"
+        :rules="bookingRules"
+        class="booking-form"
+      >
+        <!-- 服务套餐信息 -->
+        <el-form-item class="package-form-item">
+          <el-card shadow="never" class="package-card">
+            <div class="package-info">
+              <div class="package-tag">已选择套餐</div>
+              <h3>{{ selectedPackageName || "尚未选择套餐" }}</h3>
+              <p v-if="selectedPackageId">套餐编号：{{ selectedPackageId }}</p>
+              <p v-else class="package-hint">建议先在服务套餐页选择合适的套餐，再进行预约。</p>
+            </div>
+          </el-card>
+        </el-form-item>
 
-      <!-- 预约日期和时间 -->
-      <el-form-item label="预约日期" prop="appointmentDate">
-        <el-date-picker
-          v-model="bookingForm.appointmentDate"
-          type="date"
-          placeholder="选择日期"
-          :disabled-date="disabledDate"
-          value-format="YYYY-MM-DD"
-          style="width: 100%"
-        />
-      </el-form-item>
+        <!-- 预约日期和时间 -->
+        <el-form-item label="预约日期" prop="appointmentDate">
+          <el-date-picker
+            v-model="bookingForm.appointmentDate"
+            type="date"
+            placeholder="选择日期"
+            :disabled-date="disabledDate"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
 
-      <el-form-item label="预约时间" prop="appointmentTime">
-        <el-time-picker
-          v-model="bookingForm.appointmentTime"
-          placeholder="选择时间"
-          :disabled-hours="disabledHours"
-          :disabled-minutes="disabledMinutes"
-          format="HH:mm"
-          value-format="HH:mm"
-          style="width: 100%"
-        />
-      </el-form-item>
+        <el-form-item label="预约时间" prop="appointmentTime">
+          <el-time-picker
+            v-model="bookingForm.appointmentTime"
+            placeholder="选择时间"
+            :disabled-hours="disabledHours"
+            :disabled-minutes="disabledMinutes"
+            format="HH:mm"
+            value-format="HH:mm"
+            style="width: 100%"
+          />
+        </el-form-item>
 
-      <!-- 宠物信息 -->
-      <el-form-item label="宠物姓名" prop="petName">
-        <el-input v-model="bookingForm.petName" placeholder="请输入宠物姓名" />
-      </el-form-item>
+        <!-- 宠物信息 -->
+        <el-form-item label="宠物姓名" prop="petName">
+          <el-input v-model="bookingForm.petName" placeholder="请输入宠物姓名" />
+        </el-form-item>
 
-      <el-form-item label="宠物类型" prop="petType">
-        <el-select 
-          v-model="bookingForm.petType" 
-          placeholder="请选择宠物类型"
-          style="width: 100%"
-          filterable
-          @change="handlePetTypeChange"
-        >
-          <el-option-group v-for="g in PET_TYPE_GROUPS" :key="g.label" :label="g.label">
-            <el-option v-for="o in g.options" :key="o.value" :label="o.label" :value="o.value">
-              <span style="float: left">{{ o.emoji ? `${o.emoji} ` : "" }}{{ o.label }}</span>
-            </el-option>
-          </el-option-group>
-        </el-select>
-      </el-form-item>
+        <el-form-item label="宠物类型" prop="petType">
+          <el-select 
+            v-model="bookingForm.petType" 
+            placeholder="请选择宠物类型"
+            style="width: 100%"
+            filterable
+            @change="handlePetTypeChange"
+          >
+            <el-option-group v-for="g in PET_TYPE_GROUPS" :key="g.label" :label="g.label">
+              <el-option v-for="o in g.options" :key="o.value" :label="o.label" :value="o.value">
+                <span style="float: left">{{ o.emoji ? `${o.emoji} ` : "" }}{{ o.label }}</span>
+              </el-option>
+            </el-option-group>
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="宠物品种" prop="petBreed">
-        <el-autocomplete
-          v-model="bookingForm.petBreed"
-          :fetch-suggestions="queryBreedSuggestions"
-          placeholder="请输入或选择宠物品种（选填）"
-          style="width: 100%"
-          clearable
-        >
-          <template #default="{ item }">
-            <div>{{ item.value }}</div>
-          </template>
-        </el-autocomplete>
-      </el-form-item>
+        <el-form-item label="宠物品种" prop="petBreed">
+          <el-autocomplete
+            v-model="bookingForm.petBreed"
+            :fetch-suggestions="queryBreedSuggestions"
+            placeholder="请输入或选择宠物品种（选填）"
+            style="width: 100%"
+            clearable
+          >
+            <template #default="{ item }">
+              <div>{{ item.value }}</div>
+            </template>
+          </el-autocomplete>
+        </el-form-item>
 
-      <el-form-item label="宠物年龄" prop="petAge">
-        <el-input-number
-          v-model="bookingForm.petAge"
-          :min="0"
-          :max="30"
-          placeholder="请输入宠物年龄"
-          style="width: 100%"
-        />
-      </el-form-item>
+        <el-form-item label="宠物年龄" prop="petAge">
+          <el-input-number
+            v-model="bookingForm.petAge"
+            :min="0"
+            :max="30"
+            placeholder="请输入宠物年龄"
+            style="width: 100%"
+          />
+        </el-form-item>
 
-      <el-form-item label="宠物体重（kg）" prop="petWeight">
-        <el-input-number
-          v-model="bookingForm.petWeight"
-          :min="0"
-          :max="100"
-          :precision="1"
-          placeholder="请输入宠物体重"
-          style="width: 100%"
-        />
-      </el-form-item>
+        <el-form-item label="宠物体重（kg）" prop="petWeight">
+          <el-input-number
+            v-model="bookingForm.petWeight"
+            :min="0"
+            :max="100"
+            :precision="1"
+            placeholder="请输入宠物体重"
+            style="width: 100%"
+          />
+        </el-form-item>
 
-      <el-form-item label="离世日期" prop="deathDate">
-        <el-date-picker
-          v-model="bookingForm.deathDate"
-          type="date"
-          placeholder="选择离世日期"
-          value-format="YYYY-MM-DD"
-          style="width: 100%"
-        />
-      </el-form-item>
+        <el-form-item label="离世日期" prop="deathDate">
+          <el-date-picker
+            v-model="bookingForm.deathDate"
+            type="date"
+            placeholder="选择离世日期"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
 
-      <el-form-item label="离世原因" prop="deathCause">
-        <el-input
-          v-model="bookingForm.deathCause"
-          type="textarea"
-          :rows="3"
-          placeholder="请简要描述宠物离世原因（选填）"
-        />
-      </el-form-item>
+        <el-form-item label="离世原因" prop="deathCause">
+          <el-input
+            v-model="bookingForm.deathCause"
+            type="textarea"
+            :rows="3"
+            placeholder="请简要描述宠物离世原因（选填）"
+          />
+        </el-form-item>
 
-      <!-- 联系人信息 -->
-      <el-form-item label="联系人姓名" prop="contactName">
-        <el-input
-          v-model="bookingForm.contactName"
-          placeholder="请输入联系人姓名"
-        />
-      </el-form-item>
+        <!-- 联系人信息 -->
+        <el-form-item label="联系人姓名" prop="contactName">
+          <el-input
+            v-model="bookingForm.contactName"
+            placeholder="请输入联系人姓名"
+          />
+        </el-form-item>
 
-      <el-form-item label="联系人电话" prop="contactPhone">
-        <el-input
-          v-model="bookingForm.contactPhone"
-          placeholder="请输入联系人电话"
-        />
-      </el-form-item>
+        <el-form-item label="联系人电话" prop="contactPhone">
+          <el-input
+            v-model="bookingForm.contactPhone"
+            placeholder="请输入联系人电话"
+          />
+        </el-form-item>
 
-      <el-form-item label="服务地址" prop="address">
-        <el-input
-          v-model="bookingForm.address"
-          type="textarea"
-          :rows="2"
-          placeholder="请输入服务地址"
-        />
-      </el-form-item>
+        <el-form-item label="服务地址" prop="address">
+          <el-input
+            v-model="bookingForm.address"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入服务地址"
+          />
+        </el-form-item>
 
-      <el-form-item label="特殊要求" prop="specialRequirements">
-        <el-alert
-          v-if="bookingForm.specialRequirements"
-          type="info"
-          :closable="false"
-          show-icon
-          style="margin-bottom: 10px"
-        >
-          <template #title>
-            <span>填写特殊要求后，系统将自动提交审核请求，管理员会在特殊需求管理页面进行审核</span>
-          </template>
-        </el-alert>
-        <el-select
-          v-model="specialRequestType"
-          placeholder="选择需求类型（选填）"
-          style="width: 100%; margin-bottom: 10px"
-          clearable
-        >
-          <el-option label="时间调整" value="时间调整" />
-          <el-option label="服务方式" value="服务方式" />
-          <el-option label="其他" value="其他" />
-        </el-select>
-        <el-input
-          v-model="bookingForm.specialRequirements"
-          type="textarea"
-          :rows="4"
-          placeholder="请详细描述您的特殊要求，例如：需要调整服务时间、特殊的服务方式、特殊注意事项等（选填）"
-          maxlength="500"
-          show-word-limit
-        />
-      </el-form-item>
+        <el-form-item label="特殊要求" prop="specialRequirements" class="full-row-item">
+          <el-alert
+            v-if="bookingForm.specialRequirements"
+            type="info"
+            :closable="false"
+            show-icon
+            class="special-tip"
+          >
+            <template #title>
+              <span>填写特殊要求后，系统将自动提交审核请求，管理员会在特殊需求管理页面进行审核。</span>
+            </template>
+          </el-alert>
+          <el-select
+            v-model="specialRequestType"
+            placeholder="选择需求类型（选填）"
+            style="width: 100%; margin-bottom: 10px"
+            clearable
+          >
+            <el-option label="时间调整" value="时间调整" />
+            <el-option label="服务方式" value="服务方式" />
+            <el-option label="其他" value="其他" />
+          </el-select>
+          <el-input
+            v-model="bookingForm.specialRequirements"
+            type="textarea"
+            :rows="4"
+            placeholder="请详细描述您的特殊要求，例如：需要调整服务时间、特殊的服务方式、特殊注意事项等（选填）"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
 
-    </el-form>
+      </el-form>
 
-    <div class="action-buttons">
-      <el-button @click="goBack">上一步</el-button>
-      <el-button type="primary" :loading="submitting" @click="submitBooking">
-        提交预约
-      </el-button>
+      <div class="action-buttons">
+        <el-button @click="goBack">上一步</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitBooking">
+          提交预约
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -573,61 +577,129 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+// 色系与首页保持一致
+$primary-color: #e07a5f; // 柔和珊瑚橙
+$success-color: #81b29a; // 温柔绿
+$warning-color: #f2cc8f; // 奶油杏
+$light-bg: #fff7f2; // 暖白
+$white: #ffffff;
+$text-primary: #3d2c23; // 暖深棕
+$text-secondary: #6e5a4f;
+$border-color: #f1e3d8;
+
 .book-service-container {
-  max-width: 800px;
+  min-height: calc(100vh - 60px);
+  padding: 32px 16px 48px;
+  background: radial-gradient(
+      900px 500px at 75% 35%,
+      rgba(224, 122, 95, 0.16) 0%,
+      rgba(255, 247, 242, 0) 60%
+    ),
+    linear-gradient(135deg, #fff7f2 0%, #fff 100%);
+
+  :deep(.el-page-header) {
+    max-width: 960px;
+    margin: 0 auto 16px;
+  }
+}
+
+.booking-main-card {
+  max-width: 960px;
   margin: 0 auto;
-  padding: 20px;
+  background-color: $white;
+  border-radius: 18px;
+  padding: 28px 28px 32px;
+  box-shadow: 0 14px 34px rgba(61, 44, 35, 0.12);
+  border: 1px solid rgba(241, 227, 216, 0.9);
 }
 
 .booking-intro {
-  margin-bottom: 30px;
+  text-align: left;
+  margin-bottom: 24px;
 
   h2 {
-    color: #303133;
-    margin-bottom: 10px;
+    font-size: 24px;
+    color: $text-primary;
+    margin-bottom: 6px;
   }
 
   p {
-    color: #606266;
-    font-size: 16px;
+    color: $text-secondary;
+    font-size: 14px;
+    line-height: 1.6;
   }
 }
 
 .booking-form {
+  margin-top: 8px;
+
   .el-form-item {
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
 
-  .el-card {
-    margin-bottom: 20px;
+  :deep(.el-form-item__label) {
+    font-weight: 600;
+    color: $text-secondary;
+  }
 
-    &.memorial-info {
-      margin-top: 30px;
+  // 容器内部控件统一圆角
+  :deep(.el-input__wrapper),
+  :deep(.el-textarea__inner),
+  :deep(.el-select .el-input__wrapper),
+  :deep(.el-input-number .el-input__wrapper),
+  :deep(.el-date-editor),
+  :deep(.el-time-picker) {
+    border-radius: 10px;
+  }
 
-      h3 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        color: #303133;
-      }
-    }
+  .package-form-item {
+    margin-bottom: 22px;
+  }
+
+  .package-card {
+    background: linear-gradient(
+      135deg,
+      rgba(224, 122, 95, 0.08) 0%,
+      rgba(255, 247, 242, 1) 40%,
+      #fff 100%
+    );
+    border-radius: 12px;
+    border: 1px solid $border-color;
   }
 
   .package-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .package-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: $primary-color;
+      background-color: rgba(224, 122, 95, 0.12);
+      border: 1px solid rgba(224, 122, 95, 0.35);
+      width: fit-content;
+      margin-bottom: 4px;
+    }
+
     h3 {
-      margin: 0 0 10px;
-      color: #303133;
+      margin: 0;
+      font-size: 18px;
+      color: $text-primary;
     }
 
     p {
       margin: 0;
-      color: #606266;
+      color: $text-secondary;
+      font-size: 13px;
     }
-  }
 
-  // 宠物类型选择器样式优化
-  .el-select {
-    .el-input__inner {
-      cursor: pointer;
+    .package-hint {
+      color: $text-secondary;
+      opacity: 0.9;
     }
   }
 
@@ -635,12 +707,45 @@ onMounted(async () => {
   .el-autocomplete {
     width: 100%;
   }
+
+  .special-tip {
+    margin-bottom: 10px;
+    border-radius: 8px;
+  }
+}
+
+.full-row-item {
+  grid-column: 1 / -1;
 }
 
 .action-buttons {
   display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 40px;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 28px;
+
+  :deep(.el-button) {
+    min-width: 110px;
+    border-radius: 999px;
+  }
+
+  :deep(.el-button--primary) {
+    background-color: $primary-color;
+    border-color: $primary-color;
+
+    &:hover {
+      filter: brightness(1.03);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .booking-main-card {
+    padding: 20px 16px 24px;
+  }
+
+  .booking-intro h2 {
+    font-size: 20px;
+  }
 }
 </style>

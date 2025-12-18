@@ -444,29 +444,61 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 治愈系配色方案
+$cream-beige: #FAF4E4; // 米色
+$soft-green: #BBD446; // 柔和绿色
+$warm-yellow: #FCD744; // 温暖黄色
+$coral-orange: #FA7B53; // 珊瑚橙
+$soft-pink: #FFCCCC; // 柔和粉色
+$soft-blue: #CCFFFF; // 柔和蓝色
+$soft-purple: #CCCCFF; // 柔和紫色
+$soft-lime: #CCFF99; // 柔和青柠
+$warm-white: #FFFFFF; // 白色
+$text-dark: #3d2c23; // 深棕色文字（高对比度）
+$text-medium: #6e5a4f; // 中等棕色文字
+$text-light: #9a857a; // 浅棕色文字
+$border-soft: #f1e3d8; // 柔和边框
+
 .service-packages-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px 20px;
   min-height: calc(100vh - 100px);
+  background: radial-gradient(900px 500px at 50% 0%, rgba(250, 244, 228, 0.3) 0%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(135deg, #fff7f2 0%, #faf4e4 50%, #fff 100%);
 }
 
 .packages-intro {
   text-align: center;
   margin-bottom: 50px;
-  padding: 30px 0;
+  padding: 40px 0;
 
   h2 {
-    color: #303133;
+    color: $text-dark;
     margin-bottom: 15px;
-    font-size: 32px;
-    font-weight: 600;
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    position: relative;
+    display: inline-block;
+    
+    &::after {
+      content: "";
+      display: block;
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, $coral-orange, $warm-yellow);
+      margin: 15px auto 0;
+      border-radius: 2px;
+    }
   }
 
   p {
-    color: #606266;
-    font-size: 16px;
-    line-height: 1.8;
+    color: $text-medium;
+    font-size: 17px;
+    line-height: 2;
+    margin-top: 20px;
+    font-weight: 400;
   }
 }
 
@@ -478,10 +510,21 @@ onMounted(() => {
 }
 
 .smart-recommend-card {
-  border-radius: 12px;
-  margin: 0 0 26px;
+  border-radius: 16px;
+  margin: 0 0 30px;
+  border: 1px solid $border-soft;
+  box-shadow: 0 4px 20px rgba(61, 44, 35, 0.08);
+  background: $warm-white;
+  
   :deep(.el-card__header) {
-    background: linear-gradient(135deg, #f7f1ff 0%, #eef6ff 100%);
+    background: linear-gradient(135deg, rgba(187, 212, 70, 0.15) 0%, rgba(252, 215, 68, 0.12) 50%, rgba(250, 123, 83, 0.1) 100%);
+    border-bottom: 2px solid $border-soft;
+    padding: 20px 24px;
+  }
+  
+  :deep(.el-card__body) {
+    padding: 24px;
+    background: $warm-white;
   }
 }
 
@@ -512,7 +555,7 @@ onMounted(() => {
 
 .smart-body {
   .smart-line {
-    color: #606266;
+    color: $text-medium;
     margin-bottom: 10px;
   }
   .smart-reco {
@@ -522,7 +565,7 @@ onMounted(() => {
     font-size: 16px;
     .name {
       font-weight: 700;
-      color: #303133;
+      color: $text-dark;
     }
     .score {
       margin-left: 8px;
@@ -532,19 +575,19 @@ onMounted(() => {
     margin-top: 14px;
     .sec-title {
       font-weight: 600;
-      color: #303133;
+      color: $text-dark;
       margin-bottom: 6px;
     }
     .sec-list {
       margin: 0;
       padding-left: 18px;
-      color: #606266;
+      color: $text-medium;
       li {
         line-height: 1.8;
       }
     }
     .sec-text {
-      color: #606266;
+      color: $text-medium;
       line-height: 1.8;
     }
     .warn {
@@ -555,6 +598,17 @@ onMounted(() => {
     margin-top: 14px;
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
+
+    :deep(.el-button--primary) {
+      background-color: $coral-orange;
+      border-color: $coral-orange;
+      color: #fff;
+
+      &:hover {
+        filter: brightness(1.05);
+      }
+    }
   }
 }
 
@@ -567,18 +621,38 @@ onMounted(() => {
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 10px 24px rgba(61, 44, 35, 0.12);
   }
 
   :deep(.el-card__header) {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
+    // 顶部改为柔和的米色纯色背景，避免刺眼渐变
+    background-color: $cream-beige;
+    color: $text-dark;
+    padding: 20px 22px;
     border-bottom: none;
   }
 
   :deep(.el-card__body) {
     padding: 24px;
+    background: $warm-white;
+
+    // 卡片内部主按钮（选择套餐）使用柔和珊瑚橙，而不是默认蓝色
+    .card-footer {
+      :deep(.el-button--primary) {
+        background-color: $coral-orange;
+        border-color: $coral-orange;
+        color: #fff;
+
+        &.selected-btn {
+          background-color: $soft-green;
+          border-color: $soft-green;
+        }
+
+        &:hover {
+          filter: brightness(1.05);
+        }
+      }
+    }
   }
 }
 
@@ -596,7 +670,7 @@ onMounted(() => {
 
   h3 {
     margin: 0;
-    color: white;
+    color: $warm-white;
     font-size: 22px;
     font-weight: 600;
   }
@@ -622,11 +696,12 @@ onMounted(() => {
 }
 
 .selected-package {
-  border: 3px solid #409eff;
-  box-shadow: 0 0 20px rgba(64, 158, 255, 0.4);
+  border: 2px solid $soft-green;
+  box-shadow: 0 0 18px rgba(187, 212, 70, 0.35);
 
   :deep(.el-card__header) {
-    background: linear-gradient(135deg, #409eff 0%, #67c23a 100%);
+    // 选中状态使用略带绿色调的米色，保持柔和
+    background-color: lighten($soft-green, 32%);
   }
 }
 
@@ -637,25 +712,25 @@ onMounted(() => {
 .package-price {
   margin: 20px 0 24px;
   padding: 15px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background-color: #fffaf5; // 柔和暖白，替代原来的渐变背景
   border-radius: 8px;
 
   .price {
     font-size: 42px;
     font-weight: bold;
-    color: #e6a23c;
+    color: $coral-orange;
     display: block;
     margin-bottom: 5px;
   }
 
   .unit {
     font-size: 16px;
-    color: #909399;
+    color: $text-light;
   }
 }
 
 .package-description {
-  color: #606266;
+  color: $text-medium;
   margin-bottom: 20px;
   line-height: 1.8;
   text-align: left;
@@ -679,13 +754,13 @@ onMounted(() => {
       padding: 10px 0;
       display: flex;
       align-items: flex-start;
-      color: #606266;
+      color: $text-medium;
       font-size: 14px;
       line-height: 1.6;
 
       .el-icon {
         margin-right: 10px;
-        color: #67c23a;
+        color: $soft-green;
         margin-top: 2px;
         flex-shrink: 0;
       }
@@ -695,11 +770,11 @@ onMounted(() => {
       }
 
       &.more-features {
-        color: #909399;
+        color: $text-light;
         font-style: italic;
 
         .el-icon {
-          color: #909399;
+          color: $text-light;
         }
       }
     }
@@ -709,11 +784,22 @@ onMounted(() => {
 .card-footer {
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid $border-soft;
+
+  :deep(.el-button--primary) {
+    background-color: $coral-orange;
+    border-color: $coral-orange;
+    color: #fff;
+
+    &:hover {
+      filter: brightness(1.05);
+    }
+  }
 
   .selected-btn {
-    background: #67c23a;
-    border-color: #67c23a;
+    background: $soft-green;
+    border-color: $soft-green;
+    color: #fff;
   }
 }
 
@@ -723,29 +809,45 @@ onMounted(() => {
   gap: 20px;
   margin-top: 40px;
   padding: 30px 0;
-  background: #f5f7fa;
+  background: rgba(250, 244, 228, 0.96);
   border-radius: 12px;
   position: sticky;
   bottom: 20px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -4px 18px rgba(61, 44, 35, 0.12);
+
+  :deep(.el-button) {
+    min-width: 120px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  :deep(.el-button--primary) {
+    background-color: $coral-orange;
+    border-color: $coral-orange;
+    color: #fff;
+
+    &:hover {
+      filter: brightness(1.05);
+    }
+  }
 }
 
 // 详情对话框样式
 :deep(.package-detail-dialog) {
   .el-dialog__header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, rgba(250, 123, 83, 0.95) 0%, rgba(252, 215, 68, 0.95) 55%, rgba(187, 212, 70, 0.95) 100%);
+    color: $warm-white;
     padding: 20px 24px;
     border-radius: 8px 8px 0 0;
 
     .el-dialog__title {
-      color: white;
+      color: $warm-white;
       font-size: 24px;
       font-weight: 600;
     }
 
     .el-dialog__headerbtn .el-dialog__close {
-      color: white;
+      color: $warm-white;
       font-size: 20px;
     }
   }
@@ -762,19 +864,19 @@ onMounted(() => {
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #ebeef5;
+    border-bottom: 2px solid $border-soft;
 
     .detail-price {
       .price-large {
         font-size: 48px;
         font-weight: bold;
-        color: #e6a23c;
+        color: $coral-orange;
         margin-right: 10px;
       }
 
       .unit-large {
         font-size: 18px;
-        color: #909399;
+        color: $text-light;
       }
     }
   }
@@ -783,17 +885,17 @@ onMounted(() => {
     margin-bottom: 30px;
 
     h4 {
-      color: #303133;
+      color: $text-dark;
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 15px;
       padding-bottom: 10px;
-      border-bottom: 2px solid #409eff;
+      border-bottom: 2px solid $coral-orange;
       display: inline-block;
     }
 
     p {
-      color: #606266;
+      color: $text-medium;
       line-height: 1.8;
       font-size: 15px;
     }
@@ -808,7 +910,7 @@ onMounted(() => {
       padding: 12px 0;
       display: flex;
       align-items: flex-start;
-      color: #606266;
+      color: $text-medium;
       font-size: 15px;
       line-height: 1.8;
       border-bottom: 1px solid #f5f7fa;
@@ -819,7 +921,7 @@ onMounted(() => {
 
       .el-icon {
         margin-right: 12px;
-        color: #67c23a;
+        color: $soft-green;
         margin-top: 3px;
         flex-shrink: 0;
         font-size: 18px;
@@ -832,10 +934,10 @@ onMounted(() => {
   }
 
   .process-content {
-    background: #f5f7fa;
+    background: $cream-beige;
     padding: 20px;
     border-radius: 8px;
-    color: #606266;
+    color: $text-medium;
     line-height: 2;
     white-space: pre-wrap;
     font-size: 15px;

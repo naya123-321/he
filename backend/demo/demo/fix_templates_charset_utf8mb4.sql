@@ -15,3 +15,4 @@ ALTER TABLE templates
   MODIFY preview_image VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL;
 
 
+

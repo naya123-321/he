@@ -10,20 +10,6 @@ const routes = [
     component: HomeView,
     meta: { requiresAuth: false },
   },
-  // 公开服务套餐页（访客可访问）
-  {
-    path: "/service-packages",
-    name: "PublicServicePackages",
-    component: () => import("@/views/pet-owner/ServicePackages.vue"),
-    meta: { requiresAuth: false },
-  },
-  // 访客信息采集（不需要登录）
-  {
-    path: "/visitor/pet-info",
-    name: "VisitorPetInfo",
-    component: () => import("@/views/visitor/PetInfoCollect.vue"),
-    meta: { requiresAuth: false },
-  },
   {
     path: "/login",
     name: "Login",
@@ -209,6 +195,11 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
+        path: "create",
+        name: "CreateOrder",
+        component: () => import("@/views/order/CreateOrder.vue"),
+      },
+      {
         path: "list",
         name: "OrderList",
         component: () => import("@/views/order/OrderList.vue"),
@@ -238,6 +229,11 @@ const routes = [
         component: () => import("@/views/memorial/CreateMemorial.vue"),
       },
       {
+        path: "edit/:id",
+        name: "EditMemorial",
+        component: () => import("@/views/memorial/EditMemorial.vue"),
+      },
+      {
         path: "templates",
         name: "TemplateList",
         component: () => import("@/views/memorial/TemplateList.vue"),
@@ -246,25 +242,6 @@ const routes = [
         path: "preview/:id",
         name: "MemorialPreview",
         component: () => import("@/views/memorial/MemorialPreview.vue"),
-      },
-      {
-        path: "annotate/:id",
-        name: "MemorialAnnotate",
-        component: () => import("@/views/memorial/MemorialAnnotate.vue"),
-      },
-    ],
-  },
-
-  // 公开分享（不需要登录）
-  {
-    path: "/memorial/share/:token",
-    component: () => import("@/layouts/BasicLayout.vue"),
-    meta: { requiresAuth: false },
-    children: [
-      {
-        path: "",
-        name: "MemorialShare",
-        component: () => import("@/views/memorial/MemorialShare.vue"),
       },
     ],
   },
@@ -294,12 +271,7 @@ router.beforeEach((to: any, from: any, next: any) => {
   if (requiresAuth && !token) {
     // 需要登录但未登录，跳转到登录页
     console.log("需要登录但未登录，跳转到登录页");
-    next({
-      path: "/login",
-      query: {
-        redirect: to.fullPath,
-      },
-    });
+    next("/login");
   } else if (
     !requiresAuth &&
     token &&
