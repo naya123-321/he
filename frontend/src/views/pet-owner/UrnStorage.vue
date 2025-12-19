@@ -184,7 +184,7 @@
         <el-descriptions-item label="订单号">{{ detail.orderNo }}</el-descriptions-item>
         <el-descriptions-item label="状态">{{ detail.statusText || statusText(detail.status) }}</el-descriptions-item>
         <el-descriptions-item label="宠物名">{{ detail.petName }}</el-descriptions-item>
-        <el-descriptions-item label="宠物类型">{{ detail.petType || "—" }}</el-descriptions-item>
+        <el-descriptions-item label="宠物类型">{{ getPetTypeLabel(detail.petType) || detail.petType || "—" }}</el-descriptions-item>
         <el-descriptions-item label="骨灰盒编号">{{ detail.urnNo }}</el-descriptions-item>
         <el-descriptions-item label="期限(月)">{{ detail.storagePeriod }}</el-descriptions-item>
         <el-descriptions-item label="寄存日期">{{ detail.storageDate }}</el-descriptions-item>
@@ -208,7 +208,7 @@ import { Plus, Refresh } from "@element-plus/icons-vue";
 import { urnStorageApi, type UrnStorageCreateDTO, type UrnStorageVO } from "@/api/urnStorage";
 import { orderApi, type OrderVO } from "@/api/order";
 import dayjs from "dayjs";
-import { PET_TYPE_GROUPS } from "@/constants/petTypes";
+import { PET_TYPE_GROUPS, getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 
@@ -483,40 +483,244 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .urn-storage-container {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 30px 20px;
+  max-width: 1400px;
   margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
 
   .content-wrapper {
-    margin-top: 16px;
+    margin-top: 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
   }
 
   .action-card {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    :deep(.el-card__body) {
+      padding: 20px;
+    }
+
     .action-bar {
       display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
+      gap: 12px;
+      margin-bottom: 16px;
+
+      :deep(.el-button--primary) {
+        background-color: $primary-color;
+        border-color: $primary-color;
+        border-radius: 8px;
+        font-weight: 500;
+
+        &:hover {
+          filter: brightness(1.05);
+        }
+      }
     }
 
     .filter-form {
-      margin-top: 6px;
+      margin-top: 8px;
+
+      :deep(.el-form-item__label) {
+        color: $text-secondary;
+        font-weight: 500;
+      }
+
+      :deep(.el-input__wrapper),
+      :deep(.el-select .el-input__wrapper) {
+        border-radius: 8px;
+      }
+
+      :deep(.el-button--primary) {
+        background-color: $primary-color;
+        border-color: $primary-color;
+        border-radius: 8px;
+      }
+    }
+  }
+
+  // 优化表格卡片
+  :deep(.el-card) {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    .el-card__body {
+      padding: 20px;
+    }
+  }
+
+  // 优化表格样式
+  :deep(.el-table) {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .el-table__header {
+      th {
+        background-color: $bg-light;
+        color: $text-primary;
+        font-weight: 600;
+      }
+    }
+
+    .el-table__body {
+      tr:hover > td {
+        background-color: rgba(64, 158, 255, 0.05);
+      }
+    }
+  }
+
+  // 优化标签样式
+  :deep(.el-tag) {
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  // 优化按钮样式
+  :deep(.el-button) {
+    border-radius: 6px;
+    font-weight: 500;
+
+    &.el-button--warning {
+      background-color: $warning-color;
+      border-color: $warning-color;
+    }
+
+    &.el-button--danger {
+      color: $danger-color;
+      border-color: $danger-color;
+
+      &:hover {
+        background-color: rgba(245, 108, 108, 0.1);
+      }
     }
   }
 
   .pager {
-    margin-top: 16px;
+    margin-top: 20px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+
+    :deep(.el-pagination) {
+      .el-pagination__total,
+      .el-pagination__jump {
+        color: $text-secondary;
+      }
+
+      .btn-prev,
+      .btn-next,
+      .el-pager li {
+        border-radius: 6px;
+      }
+
+      .el-pager li.is-active {
+        background-color: $primary-color;
+        color: $bg-white;
+      }
+    }
   }
 
   .form-tip {
-    margin-top: 6px;
+    margin-top: 8px;
     font-size: 12px;
-    color: #909399;
+    color: $text-light;
+    line-height: 1.6;
+    padding: 8px 12px;
+    background: $bg-light;
+    border-radius: 6px;
+    border-left: 3px solid $primary-color;
+  }
+
+  // 优化对话框样式
+  :deep(.el-dialog) {
+    border-radius: 12px;
+
+    .el-dialog__header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px 24px;
+      border-radius: 12px 12px 0 0;
+
+      .el-dialog__title {
+        color: $bg-white;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .el-dialog__headerbtn .el-dialog__close {
+        color: $bg-white;
+        font-size: 20px;
+      }
+    }
+
+    .el-dialog__body {
+      padding: 24px;
+    }
+
+    .el-form-item__label {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+
+    .el-input__wrapper,
+    .el-select .el-input__wrapper,
+    .el-textarea__inner,
+    .el-date-editor,
+    .el-input-number {
+      border-radius: 8px;
+    }
+
+    .el-button--primary {
+      background-color: $primary-color;
+      border-color: $primary-color;
+      border-radius: 8px;
+    }
+  }
+
+  // 优化描述列表样式
+  :deep(.el-descriptions) {
+    .el-descriptions__label.is-bordered-label {
+      background: $bg-light;
+      color: $text-secondary;
+      font-weight: 600;
+    }
+
+    .el-descriptions__content.is-bordered-content {
+      color: $text-primary;
+    }
+  }
+
+  // 优化空状态
+  :deep(.el-empty) {
+    padding: 60px 0;
   }
 }
 </style>

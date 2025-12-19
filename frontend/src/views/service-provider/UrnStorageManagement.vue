@@ -155,7 +155,7 @@
         <el-descriptions-item label="宠主">{{ detail.userName || "-" }}</el-descriptions-item>
         <el-descriptions-item label="手机号">{{ detail.userPhone || "-" }}</el-descriptions-item>
         <el-descriptions-item label="宠物名">{{ detail.petName }}</el-descriptions-item>
-        <el-descriptions-item label="宠物类型">{{ detail.petType || "-" }}</el-descriptions-item>
+        <el-descriptions-item label="宠物类型">{{ getPetTypeLabel(detail.petType) || detail.petType || "-" }}</el-descriptions-item>
         <el-descriptions-item label="骨灰盒编号">{{ detail.urnNo }}</el-descriptions-item>
         <el-descriptions-item label="寄存位置">{{ detail.storageLocation || "-" }}</el-descriptions-item>
         <el-descriptions-item label="寄存日期">{{ detail.storageDate }}</el-descriptions-item>
@@ -229,7 +229,7 @@ import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
 import { Refresh, Search } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import { urnStorageApi, type UrnStorageCreateDTO, type UrnStorageVO } from "@/api/urnStorage";
-import { PET_TYPE_GROUPS } from "@/constants/petTypes";
+import { PET_TYPE_GROUPS, getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 function goBack() {
@@ -474,46 +474,251 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .urn-storage-management-container {
-  padding: 20px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
 
-  .content-wrapper {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
 
-  .filter-card {
-    .filter-form {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-      align-items: center;
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
     }
   }
 
-  .pagination-wrapper {
-    margin-top: 16px;
+  .content-wrapper {
+    margin-top: 24px;
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .filter-card {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
+
+    .filter-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 20px;
+      align-items: center;
+
+      .el-form-item {
+        margin-bottom: 0;
+
+        .el-form-item__label {
+          color: $text-secondary;
+          font-weight: 500;
+        }
+      }
+
+      :deep(.el-input__wrapper),
+      :deep(.el-select .el-input__wrapper),
+      :deep(.el-input-number),
+      :deep(.el-date-editor) {
+        border-radius: 8px;
+      }
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
+
+        &.el-button--primary {
+          background-color: $primary-color;
+          border-color: $primary-color;
+        }
+      }
+    }
+  }
+
+  :deep(.el-card) {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .el-card__body {
+      padding: 24px;
+    }
+  }
+
+  :deep(.el-table) {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .el-table__header {
+      th {
+        background: $bg-light;
+        color: $text-primary;
+        font-weight: 600;
+        border-bottom: 2px solid $border-color;
+      }
+    }
+
+    .el-table__body {
+      tr {
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(64, 158, 255, 0.05);
+        }
+      }
+
+      td {
+        border-bottom: 1px solid $border-color;
+      }
+    }
+  }
+
+  :deep(.el-tag) {
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  :deep(.el-button) {
+    border-radius: 8px;
+    font-weight: 500;
+    margin-right: 8px;
+    margin-bottom: 4px;
+  }
+
+  .pagination-wrapper {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+
+    :deep(.el-pagination) {
+      .el-pager li {
+        border-radius: 6px;
+        margin: 0 4px;
+
+        &.is-active {
+          background-color: $primary-color;
+          color: $bg-white;
+        }
+      }
+
+      .btn-prev,
+      .btn-next {
+        border-radius: 6px;
+      }
+    }
   }
 
   .muted {
-    color: #909399;
+    color: $text-light;
     font-size: 12px;
+    margin-top: 4px;
   }
 
   .user-cell {
     display: flex;
     flex-direction: column;
-    line-height: 1.2;
+    line-height: 1.6;
+    gap: 4px;
+
     .user-name {
       font-weight: 600;
+      color: $text-primary;
     }
+
     .user-phone {
-      color: #909399;
-      font-size: 12px;
+      color: $text-light;
+      font-size: 13px;
+    }
+  }
+}
+
+// 优化对话框样式
+:deep(.el-dialog) {
+  border-radius: 12px;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+
+    .el-dialog__title {
+      color: $bg-white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+      color: $bg-white;
+      font-size: 20px;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-form-item__label {
+    color: $text-secondary;
+    font-weight: 500;
+  }
+
+  .el-input__wrapper,
+  .el-textarea__inner,
+  .el-select .el-input__wrapper,
+  .el-input-number,
+  .el-date-editor {
+    border-radius: 8px;
+  }
+
+  .el-descriptions {
+    .el-descriptions__label {
+      background: $bg-light;
+      color: $text-secondary;
+      font-weight: 500;
+    }
+
+    .el-descriptions__content {
+      color: $text-primary;
+    }
+  }
+
+  .el-button {
+    border-radius: 8px;
+    font-weight: 500;
+
+    &.el-button--primary {
+      background-color: $primary-color;
+      border-color: $primary-color;
     }
   }
 }

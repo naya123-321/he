@@ -76,7 +76,7 @@
         <el-table-column prop="orderNo" label="订单号" width="180" />
         <el-table-column prop="petName" label="宠物姓名" width="120">
           <template #default="{ row }">
-            <el-tag type="info">{{ row.petType }}</el-tag>
+            <el-tag type="info">{{ getPetTypeLabel(row.petType) || row.petType }}</el-tag>
             {{ row.petName }}
           </template>
         </el-table-column>
@@ -191,6 +191,7 @@ import { ElMessage, ElLoading } from "element-plus";
 import { useOrderStore } from "@/store/order";
 import { useUserStore } from "@/store/user";
 import { orderApi, OrderQueryParams, OrderStat } from "@/api/order";
+import { getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 const orderStore = useOrderStore();

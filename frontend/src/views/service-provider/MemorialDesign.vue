@@ -20,7 +20,7 @@
           </template>
           <div class="meta-row">
             <div>宠主：{{ memorialInfo.username || "-" }}</div>
-            <div>宠物：{{ memorialInfo.petName }} {{ memorialInfo.petType ? `(${memorialInfo.petType})` : "" }}</div>
+            <div>宠物：{{ memorialInfo.petName }} {{ memorialInfo.petType ? `(${getPetTypeLabel(memorialInfo.petType) || memorialInfo.petType})` : "" }}</div>
           </div>
           <div class="meta-row">
             <div>订单ID：{{ memorialInfo.orderId || "-" }}</div>
@@ -138,6 +138,7 @@ import { ElMessage, ElPageHeader, ElEmpty, ElButton } from 'element-plus';
 import type { UploadFile } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
 import { memorialApi, type MemorialVO } from '@/api/memorial';
+import { getPetTypeLabel } from '@/constants/petTypes';
 
 const router = useRouter();
 const route = useRoute();
@@ -266,37 +267,93 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .memorial-design-container {
-  padding: 20px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
   
   .content-wrapper {
-    margin-top: 20px;
+    margin-top: 24px;
   }
   
   .memorial-header {
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid $border-color;
     
     h2 {
-      margin: 0 0 8px;
-      font-size: 24px;
-      color: #303133;
+      margin: 0 0 10px;
+      font-size: 28px;
+      color: $text-primary;
+      font-weight: 700;
     }
     
     p {
       margin: 0;
-      font-size: 14px;
-      color: #606266;
+      font-size: 16px;
+      color: $text-secondary;
+      line-height: 1.6;
     }
   }
   
   .design-tools {
     display: flex;
     gap: 12px;
-    margin-top: 16px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px solid $border-color;
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+      padding: 12px 24px;
+    }
   }
 
   .section {
-    margin-bottom: 14px;
+    margin-bottom: 24px;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    :deep(.el-card__header) {
+      background: $bg-light;
+      border-bottom: 1px solid $border-color;
+      padding: 16px 20px;
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
   }
 
   .section-title {
@@ -304,38 +361,121 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    font-weight: 600;
+    color: $text-primary;
+    font-size: 16px;
+
+    :deep(.el-tag) {
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+    }
   }
 
   .meta-row {
     display: flex;
-    gap: 18px;
+    gap: 24px;
     flex-wrap: wrap;
-    color: #606266;
-    margin-bottom: 8px;
+    color: $text-secondary;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: $bg-light;
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.8;
+
+    div {
+      flex: 1;
+      min-width: 200px;
+    }
   }
 
   .images {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 16px;
   }
 
   .img-item {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid $border-color;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+      border-color: $primary-color;
+    }
+
+    :deep(.el-image) {
+      border-radius: 10px 10px 0 0;
+    }
   }
 
   .img-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    padding: 8px;
+    background: $bg-light;
+
+    :deep(.el-button) {
+      border-radius: 6px;
+      font-weight: 500;
+    }
   }
 
   .pdf {
-    margin-top: 10px;
+    margin-top: 16px;
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
+    padding: 16px;
+    background: $bg-light;
+    border-radius: 10px;
+    border-left: 3px solid $primary-color;
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+    }
+  }
+
+  :deep(.el-form) {
+    .el-form-item__label {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+
+    .el-input__wrapper,
+    .el-textarea__inner,
+    .el-upload {
+      border-radius: 8px;
+    }
+
+    .el-button {
+      border-radius: 8px;
+      font-weight: 500;
+
+      &.el-button--primary {
+        background-color: $primary-color;
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  :deep(.el-upload-list--picture-card) {
+    .el-upload-list__item {
+      border-radius: 10px;
+      border: 1px solid $border-color;
+    }
   }
 }
 </style>

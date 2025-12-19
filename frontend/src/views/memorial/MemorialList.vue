@@ -57,7 +57,7 @@
               </div>
               <div class="card-meta">
                 <span class="meta-item">宠物：{{ m.petName }}</span>
-                <span v-if="m.petType" class="meta-item">({{ m.petType }})</span>
+                <span v-if="m.petType" class="meta-item">({{ getPetTypeLabel(m.petType) || m.petType }})</span>
               </div>
               <div class="card-meta">
                 <span class="meta-item">状态：{{ m.statusText || statusText(m.status) }}</span>
@@ -155,6 +155,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { memorialApi, type MemorialVO } from "@/api/memorial";
 import { useMemorialStore } from "@/store/memorial";
 import { orderApi, type OrderVO } from "@/api/order";
+import { getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 const memorialStore = useMemorialStore();
@@ -331,89 +332,287 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-  .memorial-list {
-  padding: 16px;
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
+.memorial-list {
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
 }
 
 .page-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid $border-color;
 
   .title {
-        margin: 0;
-        font-size: 20px;
+    margin: 0;
+    font-size: 28px;
     font-weight: 700;
+    color: $text-primary;
+    letter-spacing: 0.5px;
   }
 
   .subtitle {
-    margin-top: 4px;
-              color: #909399;
-              font-size: 12px;
+    margin-top: 8px;
+    color: $text-secondary;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .actions {
+    :deep(.el-button--primary) {
+      background-color: $primary-color;
+      border-color: $primary-color;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-weight: 500;
+
+      &:hover {
+        filter: brightness(1.05);
+      }
+    }
   }
 }
 
 .toolbar {
-  margin-bottom: 12px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
 
   .toolbar-row {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     align-items: center;
-      flex-wrap: wrap;
+    flex-wrap: wrap;
     justify-content: space-between;
+  }
+
+  .status {
+    :deep(.el-segmented) {
+      background-color: $bg-light;
+      border-radius: 8px;
+    }
   }
 
   .search {
     width: min(520px, 100%);
+
+    :deep(.el-input__wrapper) {
+      border-radius: 8px;
+    }
+
+    :deep(.el-button) {
+      border-radius: 0 8px 8px 0;
+    }
   }
 }
 
 .content {
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  :deep(.el-card__body) {
+    padding: 24px;
+  }
+
   .list-wrap {
-    min-height: 240px;
+    min-height: 300px;
   }
 }
 
 .card {
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
   cursor: default;
+  height: 100%;
 
-          .card-title {
-    font-weight: 700;
-    margin-bottom: 6px;
-            cursor: pointer;
-          }
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    border-color: $primary-color;
+  }
 
-          .card-meta {
-            color: #606266;
-    font-size: 12px;
-    margin-bottom: 6px;
-              display: flex;
-    gap: 6px;
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
+
+  .card-title {
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    color: $text-primary;
+    transition: color 0.3s;
+    line-height: 1.4;
+
+    &:hover {
+      color: $primary-color;
+    }
+  }
+
+  .card-meta {
+    color: $text-secondary;
+    font-size: 13px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 8px;
     flex-wrap: wrap;
-          }
+    line-height: 1.6;
 
-          .card-actions {
-            display: flex;
+    .meta-item {
+      padding: 4px 8px;
+      background: $bg-light;
+      border-radius: 4px;
+    }
+  }
+
+  .card-actions {
+    display: flex;
     gap: 8px;
     justify-content: flex-end;
-    margin-top: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid $border-color;
+    flex-wrap: wrap;
+
+    :deep(.el-button) {
+      border-radius: 6px;
+      font-weight: 500;
+
+      &.el-button--warning {
+        background-color: $warning-color;
+        border-color: $warning-color;
+      }
+
+      &.el-button--success {
+        background-color: $success-color;
+        border-color: $success-color;
+      }
+
+      &.el-button--danger {
+        color: $danger-color;
+        border-color: $danger-color;
+
+        &:hover {
+          background-color: rgba(245, 108, 108, 0.1);
+        }
+      }
+
+      &.el-button--info {
+        background-color: $text-secondary;
+        border-color: $text-secondary;
+      }
+    }
   }
 }
 
 .pager {
-  margin-top: 12px;
-      display: flex;
-      justify-content: flex-end;
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+  border-top: 1px solid $border-color;
+
+  :deep(.el-pagination) {
+    .el-pagination__total,
+    .el-pagination__jump {
+      color: $text-secondary;
+    }
+
+    .btn-prev,
+    .btn-next,
+    .el-pager li {
+      border-radius: 6px;
+    }
+
+    .el-pager li.is-active {
+      background-color: $primary-color;
+      color: $bg-white;
+    }
+  }
+}
+
+// 优化对话框样式
+:deep(.el-dialog) {
+  border-radius: 12px;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+
+    .el-dialog__title {
+      color: $bg-white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+      color: $bg-white;
+      font-size: 20px;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-form-item__label {
+    color: $text-secondary;
+    font-weight: 500;
+  }
+
+  .el-select,
+  .el-input__wrapper {
+    border-radius: 8px;
+  }
+
+  .el-button--primary {
+    background-color: $primary-color;
+    border-color: $primary-color;
+    border-radius: 8px;
+  }
 }
 
 .tip {
-  margin-top: 6px;
-  color: #909399;
+  margin-top: 8px;
+  color: $text-light;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.6;
+  padding: 8px 12px;
+  background: $bg-light;
+  border-radius: 6px;
+  border-left: 3px solid $primary-color;
+}
+
+// 优化空状态
+:deep(.el-empty) {
+  padding: 60px 0;
 }
 </style>
 

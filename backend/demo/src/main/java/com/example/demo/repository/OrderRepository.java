@@ -76,6 +76,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o.serviceTypeId, COUNT(o) FROM Order o WHERE o.status IN (0, 1, 2, 3) GROUP BY o.serviceTypeId")
     List<Object[]> countOrdersByServiceType();
     
+    // 统计每个宠物类型的订单数量（排除已取消的订单，status = 4，且petType不为空）
+    // 使用 IN 明确指定有效的订单状态：0待确认, 1已确认, 2服务中, 3已完成
+    @Query("SELECT o.petType, COUNT(o) FROM Order o WHERE o.status IN (0, 1, 2, 3) AND o.petType IS NOT NULL AND o.petType != '' GROUP BY o.petType")
+    List<Object[]> countOrdersByPetType();
+    
     // 查询指定时间范围内的订单（用于趋势统计）
     @Query("SELECT o FROM Order o WHERE o.createTime >= :startDate AND o.createTime <= :endDate ORDER BY o.createTime ASC")
     List<Order> findOrdersByDateRange(

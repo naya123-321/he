@@ -108,6 +108,17 @@ export const orderApi = {
       params: { days },
     });
   },
+
+  // 获取宠物类型分布数据
+  getPetTypeDistribution: () => {
+    return request.get<ApiResponse<{
+      distribution: Array<{
+        petType: string;
+        count: number;
+      }>;
+      totalOrders: number;
+    }>>("/order/pet-type-distribution");
+  },
 };
 
 // 服务类型接口

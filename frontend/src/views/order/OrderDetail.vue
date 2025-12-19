@@ -17,7 +17,7 @@
 
     <div class="detail-content">
       <!-- 订单信息卡片 -->
-      <el-row :gutter="20">
+      <el-row :gutter="24">
         <el-col :span="16">
           <!-- 基本信息 -->
           <el-card class="info-card">
@@ -81,7 +81,7 @@
           </el-card>
 
           <!-- 宠物信息 -->
-          <el-card class="info-card" style="margin-top: 20px">
+          <el-card class="info-card">
             <template #header>
               <span>宠物信息</span>
             </template>
@@ -91,7 +91,7 @@
                 orderDetail?.petName
               }}</el-descriptions-item>
               <el-descriptions-item label="宠物类型">{{
-                orderDetail?.petType
+                getPetTypeLabel(orderDetail?.petType) || orderDetail?.petType
               }}</el-descriptions-item>
               <el-descriptions-item label="宠物品种">{{
                 orderDetail?.petBreed || "未填写"
@@ -112,7 +112,7 @@
           </el-card>
 
           <!-- 联系信息 -->
-          <el-card class="info-card" style="margin-top: 20px">
+          <el-card class="info-card">
             <template #header>
               <span>联系信息</span>
             </template>
@@ -137,7 +137,6 @@
           <el-card
             v-if="approvedSpecialRequest"
             class="info-card special-request-card"
-            style="margin-top: 20px"
           >
             <template #header>
               <div class="card-header">
@@ -177,7 +176,6 @@
           <el-card
             v-if="orderDetail?.serviceNotes"
             class="info-card"
-            style="margin-top: 20px"
           >
             <template #header>
               <span>服务记录</span>
@@ -191,7 +189,6 @@
           <el-card
             v-if="orderDetail?.rating"
             class="info-card"
-            style="margin-top: 20px"
           >
             <template #header>
               <span>服务评价</span>
@@ -199,7 +196,12 @@
 
             <div class="review-content">
               <div class="rating-section">
-                <el-rate :value="orderDetail?.rating" disabled show-text />
+                <el-rate 
+                  :model-value="orderDetail?.rating || 0" 
+                  disabled 
+                  show-text
+                  :texts="ratingTexts"
+                />
                 <span class="rating-text">{{ orderDetail?.rating }}分</span>
               </div>
               <div class="review-text" v-if="orderDetail?.review">
@@ -211,7 +213,6 @@
           <!-- 服务人员信息 -->
           <el-card
             class="provider-card"
-            style="margin-top: 20px"
           >
             <template #header>
               <span>服务人员</span>
@@ -311,21 +312,6 @@
               </template>
             </div>
           </el-card>
-
-          <!-- 操作记录 -->
-          <el-card class="log-card" style="margin-top: 20px">
-            <template #header>
-              <span>操作记录</span>
-            </template>
-
-            <div class="log-list">
-              <div v-for="log in statusLogs" :key="log.id" class="log-item">
-                <div class="log-time">{{ formatTime(log.createTime) }}</div>
-                <div class="log-content">{{ log.remark }}</div>
-                <div class="log-operator">操作人：{{ log.operatorName }}</div>
-              </div>
-            </div>
-          </el-card>
         </el-col>
 
         <el-col :span="8">
@@ -380,7 +366,12 @@
     <el-dialog v-model="reviewDialogVisible" title="评价服务" width="500px">
       <el-form ref="reviewForm" :model="reviewForm" :rules="reviewRules">
         <el-form-item label="评分">
-          <el-rate v-model="reviewForm.rating" allow-half show-text></el-rate>
+          <el-rate 
+            v-model="reviewForm.rating" 
+            allow-half 
+            show-text
+            :texts="ratingTexts"
+          ></el-rate>
         </el-form-item>
         <el-form-item prop="review">
           <el-input
@@ -458,6 +449,10 @@ import { getUserList } from "@/api/user";
 import type { UserVO } from "@/api/user";
 import { Phone, Clock } from "@element-plus/icons-vue";
 import { specialRequestApi, type SpecialRequestVO } from "@/api/specialRequest";
+import { getPetTypeLabel } from "@/constants/petTypes";
+
+// 评分文本配置（中文）
+const ratingTexts = ['极差', '差', '一般', '满意', '非常满意'];
 
 // 订单详情数据
 const orderDetail = computed(() => orderStore.currentOrder);
@@ -568,8 +563,6 @@ const showNoteDialog = ref(false);
 const noteForm = reactive({
   notes: "",
 });
-// 状态日志
-const statusLogs = ref<any[]>([]);
 
 // 分配服务人员相关
 const assignDialogVisible = ref(false);
@@ -645,7 +638,6 @@ const getOrderDetail = async () => {
   try {
     loading.value = true;
     await orderStore.fetchOrderDetail(orderId);
-    await loadStatusLogs(orderId);
     await loadApprovedSpecialRequest(orderId);
   } catch (error) {
     ElMessage.error("获取订单详情失败");
@@ -673,23 +665,6 @@ const loadApprovedSpecialRequest = async (orderId: string) => {
     // 其他错误才记录日志，但不显示错误提示（因为这是可选功能）
     console.warn("获取特殊需求失败（可能没有特殊需求）:", error?.message || error);
     approvedSpecialRequest.value = null;
-  }
-};
-
-// 加载状态日志
-const loadStatusLogs = async (orderId: string) => {
-  try {
-    const res = await orderApi.getStatusLogs(Number(orderId));
-    if (res && res.code === 200 && res.data) {
-      statusLogs.value = res.data;
-    } else if (res && res.data && res.data.code === 200) {
-      // 兼容旧格式
-      statusLogs.value = res.data.data || [];
-    }
-  } catch (error) {
-    console.error("获取操作记录失败:", error);
-    // 不显示错误提示，避免频繁弹窗
-    statusLogs.value = [];
   }
 };
 
@@ -926,64 +901,200 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .order-detail-container {
-  padding: 20px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
 
   .header-title {
     display: flex;
     align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: $text-primary;
+
+    :deep(.el-tag) {
+      border-radius: 999px;
+      font-weight: 500;
+      margin-left: 12px;
+    }
   }
 
   .detail-content {
-    margin-top: 20px;
+    margin-top: 24px;
+
+    .info-card,
+    .provider-card,
+    .timeline-card {
+      border-radius: 12px;
+      border: 1px solid $border-color;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      :deep(.el-card__header) {
+        background: $bg-light;
+        border-bottom: 1px solid $border-color;
+        padding: 16px 20px;
+        font-weight: 600;
+        color: $text-primary;
+        font-size: 16px;
+      }
+
+      :deep(.el-card__body) {
+        padding: 24px;
+      }
+    }
 
     .info-card {
       .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        width: 100%;
+
+        .card-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+
+          :deep(.el-button) {
+            border-radius: 8px;
+            font-weight: 500;
+          }
+        }
+      }
+
+      :deep(.el-descriptions) {
+        .el-descriptions__label {
+          color: $text-secondary;
+          font-weight: 500;
+          background: $bg-light;
+        }
+
+        .el-descriptions__content {
+          color: $text-primary;
+        }
+
+        .el-descriptions__table {
+          border-radius: 8px;
+          overflow: hidden;
+        }
       }
 
       .service-notes {
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 4px;
-        line-height: 1.6;
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.05) 100%);
+        border-radius: 10px;
+        line-height: 2;
+        color: $text-primary;
+        border-left: 3px solid $primary-color;
+        white-space: pre-wrap;
+        word-break: break-word;
       }
 
       .review-content {
         .rating-section {
           display: flex;
           align-items: center;
-          margin-bottom: 10px;
+          margin-bottom: 16px;
+          padding: 12px;
+          background: $bg-light;
+          border-radius: 8px;
+
+          :deep(.el-rate) {
+            .el-rate__item {
+              font-size: 24px;
+            }
+          }
 
           .rating-text {
-            margin-left: 10px;
-            font-size: 16px;
-            color: #e6a23c;
-            font-weight: bold;
+            margin-left: 12px;
+            font-size: 18px;
+            color: $warning-color;
+            font-weight: 600;
           }
         }
 
         .review-text {
-          padding: 10px;
-          background: #f8f9fa;
-          border-radius: 4px;
+          padding: 16px;
+          background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.05) 100%);
+          border-radius: 10px;
+          border-left: 3px solid $success-color;
 
           p {
             margin: 0;
-            line-height: 1.6;
+            line-height: 2;
+            color: $text-primary;
           }
         }
       }
     }
 
     .timeline-card {
+      position: sticky;
+      top: 20px;
+
+      :deep(.el-timeline) {
+        .el-timeline-item {
+          .el-timeline-item__timestamp {
+            color: $text-secondary;
+            font-size: 13px;
+            font-weight: 500;
+          }
+
+          .el-timeline-item__node {
+            border-width: 3px;
+          }
+        }
+      }
+
       .timeline-content {
+        strong {
+          color: $text-primary;
+          font-size: 15px;
+          font-weight: 600;
+          display: block;
+          margin-bottom: 6px;
+        }
+
         p {
-          margin: 5px 0 0;
-          color: #666;
+          margin: 6px 0 0;
+          color: $text-secondary;
           font-size: 14px;
+          line-height: 1.6;
         }
       }
     }
@@ -993,24 +1104,41 @@ onMounted(() => {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
+        padding: 20px;
+        background: $bg-light;
+        border-radius: 12px;
+        border: 1px solid $border-color;
 
         .provider-avatar {
           margin-right: 20px;
+
+          :deep(.el-avatar) {
+            border: 3px solid $primary-color;
+            box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+          }
         }
 
         .provider-details {
+          flex: 1;
+
           h4 {
-            margin: 0 0 10px;
-            color: #333;
+            margin: 0 0 12px;
+            color: $text-primary;
+            font-size: 18px;
+            font-weight: 600;
           }
 
           p {
-            margin: 5px 0;
-            color: #666;
+            margin: 8px 0;
+            color: $text-secondary;
             font-size: 14px;
+            display: flex;
+            align-items: center;
 
             .el-icon {
-              margin-right: 5px;
+              margin-right: 8px;
+              color: $primary-color;
+              font-size: 16px;
             }
           }
         }
@@ -1020,143 +1148,152 @@ onMounted(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
-      }
-    }
+        padding-top: 16px;
+        border-top: 1px solid $border-color;
 
-    .log-card {
-      .log-list {
-        max-height: 300px;
-        overflow-y: auto;
-
-        .log-item {
-          padding: 10px 0;
-          border-bottom: 1px solid #eee;
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          .log-time {
-            font-size: 12px;
-            color: #999;
-          }
-
-          .log-content {
-            margin: 5px 0;
-            color: #333;
-          }
-
-          .log-operator {
-            font-size: 12px;
-            color: #666;
-          }
+        :deep(.el-button) {
+          border-radius: 8px;
+          font-weight: 500;
         }
       }
     }
 
     .special-request-card {
-      border: 2px solid #67c23a;
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 2px solid $success-color;
+      background: linear-gradient(135deg, rgba(103, 194, 58, 0.08) 0%, rgba(64, 158, 255, 0.05) 100%);
+      box-shadow: 0 4px 12px rgba(103, 194, 58, 0.15);
 
       .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+
+        :deep(.el-tag) {
+          border-radius: 999px;
+          font-weight: 500;
+        }
       }
 
       .special-request-description {
-        padding: 12px;
-        background: #fff;
-        border-radius: 4px;
-        line-height: 1.6;
-        color: #303133;
+        padding: 16px;
+        background: $bg-white;
+        border-radius: 10px;
+        line-height: 2;
+        color: $text-primary;
         white-space: pre-wrap;
         word-break: break-word;
+        border: 1px solid $border-color;
       }
 
       .admin-comment {
-        padding: 12px;
-        background: #f0f9ff;
-        border-left: 3px solid #409eff;
-        border-radius: 4px;
-        line-height: 1.6;
-        color: #303133;
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(64, 158, 255, 0.1) 0%, rgba(102, 126, 234, 0.08) 100%);
+        border-left: 4px solid $primary-color;
+        border-radius: 10px;
+        line-height: 2;
+        color: $text-primary;
         white-space: pre-wrap;
         word-break: break-word;
+        margin-top: 12px;
       }
+    }
+  }
+}
+
+// 优化对话框样式
+:deep(.el-dialog) {
+  border-radius: 12px;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+
+    .el-dialog__title {
+      color: $bg-white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+      color: $bg-white;
+      font-size: 20px;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-form-item__label {
+    color: $text-secondary;
+    font-weight: 500;
+  }
+
+  .el-input__wrapper,
+  .el-textarea__inner,
+  .el-select .el-input__wrapper {
+    border-radius: 8px;
+  }
+
+  .el-button {
+    border-radius: 8px;
+    font-weight: 500;
+
+    &.el-button--primary {
+      background-color: $primary-color;
+      border-color: $primary-color;
+    }
+  }
+
+  :deep(.el-rate) {
+    .el-rate__item {
+      font-size: 28px;
     }
   }
 }
 
 @media (max-width: 768px) {
   .order-detail-container {
-    .provider-info {
-      display: flex;
-      align-items: center;
-      padding: 10px 0;
+    padding: 20px 16px;
+
+    .detail-content {
+      .info-card,
+      .provider-card,
+      .timeline-card {
+        :deep(.el-card__body) {
+          padding: 16px;
+        }
+      }
+
+      .provider-card {
+        .provider-info {
+          flex-direction: column;
+          text-align: center;
+          padding: 16px;
+
+          .provider-avatar {
+            margin-right: 0;
+            margin-bottom: 16px;
+          }
+        }
+      }
     }
   }
-}
 
-.provider-avatar {
-  margin-right: 15px;
-}
-
-.provider-details {
-  flex: 1;
-}
-
-.provider-details h4 {
-  margin: 0 0 10px;
-  font-size: 16px;
-}
-
-.provider-details p {
-  margin: 5px 0;
-  color: #606266;
-}
-
-.provider-actions {
-  margin-top: 15px;
-  text-align: right;
-}
-
-/* 操作记录样式 */
-.log-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.log-item {
-  padding: 10px 0;
-  border-bottom: 1px dashed #e4e7ed;
-}
-
-.log-item:last-child {
-  border-bottom: none;
-}
-
-.log-time {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 5px;
-}
-
-.log-content {
-  line-height: 1.6;
-}
-
-.log-operator {
-  margin-top: 5px;
-  font-size: 12px;
-  color: #909399;
-}
-
-@media (max-width: 768px) {
-  .el-col {
+  :deep(.el-col) {
     &[span="16"],
     &[span="8"] {
-      width: 100%;
+      width: 100% !important;
+    }
+  }
+
+  :deep(.el-row) {
+    margin: 0 !important;
+
+    .el-col {
+      padding: 0 !important;
+      margin-bottom: 20px;
     }
   }
 }

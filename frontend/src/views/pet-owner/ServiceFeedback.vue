@@ -403,77 +403,149 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .service-feedback-container {
-  padding: 20px;
+  padding: 30px 20px;
   max-width: 1200px;
   margin: 0 auto;
-  
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
+
   .content-wrapper {
     margin-top: 20px;
+
+    // 优化标签页样式
+    :deep(.el-tabs) {
+      .el-tabs__header {
+        margin-bottom: 24px;
+      }
+
+      .el-tabs__item {
+        font-size: 16px;
+        font-weight: 500;
+        color: $text-secondary;
+
+        &.is-active {
+          color: $primary-color;
+          font-weight: 600;
+        }
+      }
+
+      .el-tabs__active-bar {
+        background-color: $primary-color;
+        height: 3px;
+      }
+
+      .el-tabs__nav-wrap::after {
+        background-color: $border-color;
+      }
+    }
   }
-  
+
   .feedback-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
     margin-top: 20px;
   }
-  
+
   .feedback-item {
-    padding: 20px;
-    background: #f9fafb;
-    border-radius: 8px;
-    border-left: 3px solid #409eff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
 
     .feedback-header {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid $border-color;
 
       .feedback-meta {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+        gap: 16px;
 
         h3 {
           margin: 0 0 8px 0;
-          font-size: 16px;
-          color: #303133;
+          font-size: 18px;
+          font-weight: 600;
+          color: $text-primary;
         }
 
         .pet-name {
           margin: 0;
           font-size: 14px;
-          color: #909399;
+          color: $text-secondary;
         }
 
         .meta-right {
           display: flex;
           flex-direction: column;
           align-items: flex-end;
-          gap: 8px;
+          gap: 10px;
+          flex-shrink: 0;
 
           .feedback-time {
-            color: #909399;
-            font-size: 12px;
+            color: $text-light;
+            font-size: 13px;
+            white-space: nowrap;
+          }
+
+          :deep(.el-tag) {
+            border-radius: 999px;
+            font-weight: 500;
           }
         }
       }
     }
 
     .feedback-content {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: $bg-light;
+      border-radius: 8px;
+      border-left: 3px solid $primary-color;
 
       strong {
-        color: #303133;
-        font-size: 14px;
+        color: $text-primary;
+        font-size: 15px;
+        font-weight: 600;
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
       }
 
       p {
-        color: #606266;
+        color: $text-secondary;
         font-size: 14px;
-        line-height: 1.6;
+        line-height: 1.8;
         margin: 0;
         white-space: pre-wrap;
         word-break: break-word;
@@ -481,82 +553,188 @@ onUnmounted(() => {
     }
 
     .provider-feedback {
-      background: #f0f9ff;
-      padding: 12px;
-      border-radius: 6px;
-      border-left: 3px solid #409eff;
-      
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.05) 100%);
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 3px solid $primary-color;
+      margin-bottom: 16px;
+
       .provider-name {
         display: block;
-        margin-top: 8px;
-        font-size: 12px;
-        color: #909399;
+        margin-top: 10px;
+        font-size: 13px;
+        color: $text-light;
+        font-style: italic;
       }
     }
 
     .feedback-response {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e4e7ed;
-      background: #f0f9ff;
-      padding: 12px;
-      border-radius: 6px;
+      margin-top: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(103, 194, 58, 0.08) 0%, rgba(64, 158, 255, 0.05) 100%);
+      border-radius: 8px;
+      border-left: 3px solid $success-color;
 
       strong {
-        color: #303133;
-        font-size: 14px;
+        color: $text-primary;
+        font-size: 15px;
+        font-weight: 600;
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
       }
 
       p {
-        color: #606266;
+        color: $text-secondary;
         font-size: 14px;
-        line-height: 1.6;
-        margin: 0 0 8px 0;
+        line-height: 1.8;
+        margin: 0 0 10px 0;
         white-space: pre-wrap;
         word-break: break-word;
       }
 
       .response-time {
-        color: #909399;
+        color: $text-light;
         font-size: 12px;
+        display: block;
+        margin-top: 8px;
       }
     }
 
     .my-response {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e4e7ed;
-      background: #f0f9ff;
-      padding: 12px;
-      border-radius: 6px;
+      margin-top: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.05) 100%);
+      border-radius: 8px;
+      border-left: 3px solid $primary-color;
 
       strong {
-        color: #303133;
-        font-size: 14px;
+        color: $text-primary;
+        font-size: 15px;
+        font-weight: 600;
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
       }
 
       p {
-        color: #606266;
+        color: $text-secondary;
         font-size: 14px;
-        line-height: 1.6;
-        margin: 0 0 8px 0;
+        line-height: 1.8;
+        margin: 0 0 10px 0;
         white-space: pre-wrap;
         word-break: break-word;
       }
 
       .response-time {
-        color: #909399;
+        color: $text-light;
         font-size: 12px;
+        display: block;
+        margin-top: 8px;
       }
     }
 
     .feedback-actions {
-      margin-top: 12px;
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
     }
+  }
+
+  // 优化提交反馈卡片样式
+  :deep(.el-card) {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+    .el-card__header {
+      background: $bg-light;
+      border-bottom: 1px solid $border-color;
+      padding: 18px 20px;
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: $text-primary;
+      }
+    }
+
+    .el-card__body {
+      padding: 24px;
+    }
+  }
+
+  // 优化表单样式
+  :deep(.el-form) {
+    .el-form-item__label {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+
+    .el-input__wrapper,
+    .el-textarea__inner {
+      border-radius: 8px;
+    }
+
+    .el-button--primary {
+      background-color: $primary-color;
+      border-color: $primary-color;
+      border-radius: 8px;
+      padding: 10px 24px;
+
+      &:hover {
+        filter: brightness(1.05);
+      }
+    }
+  }
+
+  // 优化对话框样式
+  :deep(.el-dialog) {
+    border-radius: 12px;
+
+    .el-dialog__header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px 24px;
+      border-radius: 12px 12px 0 0;
+
+      .el-dialog__title {
+        color: $bg-white;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .el-dialog__headerbtn .el-dialog__close {
+        color: $bg-white;
+        font-size: 20px;
+      }
+    }
+
+    .el-dialog__body {
+      padding: 24px;
+    }
+  }
+
+  // 优化分页样式
+  :deep(.el-pagination) {
+    .el-pagination__total,
+    .el-pagination__jump {
+      color: $text-secondary;
+    }
+
+    .btn-prev,
+    .btn-next,
+    .el-pager li {
+      border-radius: 6px;
+    }
+
+    .el-pager li.is-active {
+      background-color: $primary-color;
+      color: $bg-white;
+    }
+  }
+
+  // 优化空状态样式
+  :deep(.el-empty) {
+    padding: 60px 0;
   }
 }
 </style>

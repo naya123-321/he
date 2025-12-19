@@ -179,7 +179,7 @@
         <el-descriptions-item label="宠主">{{ detail.userName || "-" }}</el-descriptions-item>
         <el-descriptions-item label="手机号">{{ detail.userPhone || "-" }}</el-descriptions-item>
         <el-descriptions-item label="宠物名">{{ detail.petName }}</el-descriptions-item>
-        <el-descriptions-item label="宠物类型">{{ detail.petType || "-" }}</el-descriptions-item>
+        <el-descriptions-item label="宠物类型">{{ getPetTypeLabel(detail.petType) || detail.petType || "-" }}</el-descriptions-item>
         <el-descriptions-item label="骨灰盒编号">{{ detail.urnNo }}</el-descriptions-item>
         <el-descriptions-item label="寄存位置">{{ detail.storageLocation || "-" }}</el-descriptions-item>
         <el-descriptions-item label="寄存日期">{{ detail.storageDate }}</el-descriptions-item>
@@ -254,7 +254,7 @@ import { ElMessage, ElMessageBox, type FormInstance } from "element-plus";
 import { Refresh, Search } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import { urnStorageApi, type UrnStorageCreateDTO, type UrnStorageVO } from "@/api/urnStorage";
-import { PET_TYPE_GROUPS } from "@/constants/petTypes";
+import { PET_TYPE_GROUPS, getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 function goBack() {

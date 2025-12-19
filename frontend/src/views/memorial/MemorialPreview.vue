@@ -40,7 +40,7 @@
         </div>
 
         <!-- 所选模板预览 -->
-        <el-card shadow="never" class="block" style="margin-bottom: 16px;">
+        <el-card shadow="never" class="block">
           <template #header>
             <div class="block-title">所选模板</div>
           </template>
@@ -66,7 +66,8 @@
 
         <el-divider />
 
-        <el-row :gutter="16">
+        <div class="design-sections">
+          <el-row :gutter="20">
           <el-col :xs="24" :md="12">
             <el-card shadow="never" class="block">
               <template #header>
@@ -90,8 +91,14 @@
                 />
               </div>
               <div v-if="draftPdf" class="pdf">
-                <el-button type="primary" link @click="openUrl(draftPdf)">在线查看PDF</el-button>
-                <el-button link @click="downloadUrl(draftPdf)">下载PDF</el-button>
+                <el-button type="primary" @click="openUrl(draftPdf)">
+                  <el-icon><View /></el-icon>
+                  在线查看PDF
+                </el-button>
+                <el-button @click="downloadUrl(draftPdf)">
+                  <el-icon><Download /></el-icon>
+                  下载PDF
+                </el-button>
               </div>
             </el-card>
           </el-col>
@@ -119,12 +126,19 @@
                 />
               </div>
               <div v-if="feedbackPdf" class="pdf">
-                <el-button type="primary" link @click="openUrl(feedbackPdf)">在线查看PDF</el-button>
-                <el-button link @click="downloadUrl(feedbackPdf)">下载PDF</el-button>
+                <el-button type="primary" @click="openUrl(feedbackPdf)">
+                  <el-icon><View /></el-icon>
+                  在线查看PDF
+                </el-button>
+                <el-button @click="downloadUrl(feedbackPdf)">
+                  <el-icon><Download /></el-icon>
+                  下载PDF
+                </el-button>
               </div>
             </el-card>
           </el-col>
-        </el-row>
+          </el-row>
+        </div>
 
         <el-divider v-if="shareUrl" />
         <div v-if="shareUrl" class="share">
@@ -189,7 +203,7 @@ import { computed, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElMessage, ElMessageBox, ElPageHeader } from 'element-plus';
 import type { UploadFile } from "element-plus";
-import { Plus } from "@element-plus/icons-vue";
+import { Plus, View, Download } from "@element-plus/icons-vue";
 import { memorialApi, templateApi, type TemplateVO } from '@/api/memorial';
 import { jsPDF } from "jspdf";
 
@@ -435,84 +449,308 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .memorial-preview-container {
-  padding: 20px;
-  
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
+
   .content-wrapper {
     margin-top: 20px;
   }
 }
 
 .collab-card {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  :deep(.el-card__body) {
+    padding: 24px;
+  }
 
   .collab-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    gap: 20px;
     flex-wrap: wrap;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(64, 158, 255, 0.05) 0%, rgba(102, 126, 234, 0.03) 100%);
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    margin-bottom: 24px;
+
+    .left {
+      flex: 1;
+      min-width: 0;
+    }
 
     .title {
-      font-size: 18px;
-      font-weight: 800;
-      color: #303133;
+      font-size: 24px;
+      font-weight: 700;
+      color: $text-primary;
+      margin-bottom: 8px;
+      line-height: 1.4;
     }
 
     .sub {
-      font-size: 13px;
-      color: #909399;
-      margin-top: 4px;
+      font-size: 14px;
+      color: $text-secondary;
+      margin-bottom: 12px;
+      line-height: 1.6;
     }
 
     .meta {
-      margin-top: 8px;
+      margin-top: 12px;
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
+
+      :deep(.el-tag) {
+        border-radius: 999px;
+        font-weight: 500;
+      }
     }
 
     .right {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
+
+        &.el-button--primary {
+          background-color: $primary-color;
+          border-color: $primary-color;
+        }
+
+        &.el-button--success {
+          background-color: $success-color;
+          border-color: $success-color;
+        }
+      }
+    }
+  }
+
+  .block {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    :deep(.el-card__header) {
+      background: $bg-light;
+      border-bottom: 1px solid $border-color;
+      padding: 16px 20px;
+    }
+
+    :deep(.el-card__body) {
+      padding: 24px;
     }
   }
 
   .block-title {
-    font-weight: 700;
+    font-weight: 600;
+    color: $text-primary;
+    font-size: 16px;
+  }
+
+  .template-meta {
+    margin-bottom: 16px;
+
+    :deep(.el-tag) {
+      border-radius: 999px;
+      font-weight: 500;
+    }
   }
 
   .images {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 20px;
+    background: $bg-light;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    min-height: 180px;
+    align-items: flex-start;
+
+    // 图片样式保持原样，只优化容器
+    :deep(.el-image) {
+      // 保持原有的内联样式，不覆盖图片尺寸和圆角
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      display: inline-block;
+
+      &:hover {
+        transform: scale(1.05);
+        z-index: 10;
+      }
+
+      // 图片本身已经有圆角，这里只添加阴影效果
+      img {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      &:hover img {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      }
+    }
   }
 
   .pdf {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
+    padding: 16px;
+    background: $bg-light;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    margin-top: 16px;
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+    }
   }
 
   .tip {
-    color: #909399;
-    font-size: 12px;
+    color: $text-light;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: $bg-light;
+    border-radius: 8px;
+    border-left: 3px solid $primary-color;
   }
 
   .share {
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.05) 100%);
+    border-radius: 12px;
+    border: 1px solid $border-color;
+
+    .share-title {
+      font-weight: 600;
+      color: $text-primary;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
     .share-actions {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
+
+        &.el-button--primary {
+          background-color: $primary-color;
+          border-color: $primary-color;
+        }
+      }
     }
-    .share-title {
-      font-weight: 700;
-      margin-bottom: 8px;
+
+    :deep(.el-input__wrapper) {
+      border-radius: 8px;
     }
   }
+
+  // 优化分隔线
+  :deep(.el-divider) {
+    border-color: $border-color;
+    margin: 32px 0;
+  }
+
+  .design-sections {
+    margin-top: 24px;
+  }
+}
+
+// 优化对话框样式
+:deep(.el-dialog) {
+  border-radius: 12px;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+
+    .el-dialog__title {
+      color: $bg-white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+      color: $bg-white;
+      font-size: 20px;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-form-item__label {
+    color: $text-secondary;
+    font-weight: 500;
+  }
+
+  .el-input__wrapper,
+  .el-textarea__inner,
+  .el-upload {
+    border-radius: 8px;
+  }
+
+  .el-button--primary {
+    background-color: $primary-color;
+    border-color: $primary-color;
+    border-radius: 8px;
+  }
+}
+
+// 优化空状态
+:deep(.el-empty) {
+  padding: 60px 0;
 }
 </style>
 

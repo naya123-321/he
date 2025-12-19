@@ -419,6 +419,28 @@ public class OrderController {
     }
 
     /**
+     * 获取宠物类型分布数据
+     */
+    @GetMapping("/pet-type-distribution")
+    public Result<Map<String, Object>> getPetTypeDistribution(
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            // 验证管理员权限
+            Long currentUserId = parseUserIdFromToken(token);
+            var userInfo = userService.getUserInfo(currentUserId);
+            if (userInfo.getRole() == null || !userInfo.getRole().equals(2)) {
+                return Result.error("无权限访问，仅管理员可查看宠物类型分布");
+            }
+            
+            Map<String, Object> distribution = orderService.getPetTypeDistribution();
+            return Result.success(distribution);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("获取宠物类型分布失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 从token中解析userId
      */
     private Long parseUserIdFromToken(String token) {

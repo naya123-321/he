@@ -423,19 +423,153 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .template-management {
-  padding: 20px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
 
   .toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 20px;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+
+      &.el-button--primary {
+        background-color: $primary-color;
+        border-color: $primary-color;
+      }
+    }
 
     .search-bar {
       display: flex;
       align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+
+      :deep(.el-input__wrapper) {
+        border-radius: 8px;
+      }
+
+      :deep(.el-select .el-input__wrapper) {
+        border-radius: 8px;
+      }
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
+
+        &.el-button--primary {
+          background-color: $primary-color;
+          border-color: $primary-color;
+        }
+      }
     }
+  }
+
+  :deep(.el-table) {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    .el-table__header {
+      th {
+        background: $bg-light;
+        color: $text-primary;
+        font-weight: 600;
+        border-bottom: 2px solid $border-color;
+      }
+    }
+
+    .el-table__body {
+      tr {
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(64, 158, 255, 0.05);
+        }
+      }
+
+      td {
+        border-bottom: 1px solid $border-color;
+      }
+    }
+  }
+
+  :deep(.el-tag) {
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  :deep(.el-button) {
+    border-radius: 8px;
+    font-weight: 500;
+    margin-right: 8px;
+    margin-bottom: 4px;
+  }
+
+  :deep(.el-image) {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
+
+// 优化对话框样式
+:deep(.el-dialog) {
+  border-radius: 12px;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+
+    .el-dialog__title {
+      color: $bg-white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+      color: $bg-white;
+      font-size: 20px;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
   }
 }
 </style>

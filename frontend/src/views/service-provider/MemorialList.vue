@@ -185,21 +185,141 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .memorial-list-container {
-  padding: 20px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
   
   .content-wrapper {
-    margin-top: 20px;
+    margin-top: 24px;
   }
   
   .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+
+      &.el-button--primary {
+        background-color: $primary-color;
+        border-color: $primary-color;
+      }
+    }
   }
   
   .error-message {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+  }
+
+  :deep(.el-card) {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .el-card__header {
+      background: $bg-light;
+      border-bottom: 1px solid $border-color;
+      padding: 16px 20px;
+    }
+
+    .el-card__body {
+      padding: 24px;
+    }
+  }
+
+  :deep(.el-table) {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .el-table__header {
+      th {
+        background: $bg-light;
+        color: $text-primary;
+        font-weight: 600;
+        border-bottom: 2px solid $border-color;
+      }
+    }
+
+    .el-table__body {
+      tr {
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: rgba(64, 158, 255, 0.05);
+        }
+      }
+
+      td {
+        border-bottom: 1px solid $border-color;
+      }
+    }
+  }
+
+  :deep(.el-tag) {
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  :deep(.el-button) {
+    border-radius: 8px;
+    font-weight: 500;
+    margin-right: 8px;
+    margin-bottom: 4px;
+  }
+
+  :deep(.el-pagination) {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+
+    .el-pager li {
+      border-radius: 6px;
+      margin: 0 4px;
+
+      &.is-active {
+        background-color: $primary-color;
+        color: $bg-white;
+      }
+    }
+
+    .btn-prev,
+    .btn-next {
+      border-radius: 6px;
+    }
   }
 }
 </style>

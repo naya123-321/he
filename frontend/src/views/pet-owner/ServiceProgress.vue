@@ -7,8 +7,11 @@
       <p>实时查看您的宠物殡葬服务进度和服务人员信息</p>
     </div>
 
-    <el-card shadow="never" class="order-selector-card">
-      <el-form inline>
+    <el-card shadow="never" class="section-card order-selector-card">
+      <template #header>
+        <div class="card-title">选择订单</div>
+      </template>
+      <el-form inline class="order-selector-form">
         <el-form-item label="选择订单">
           <el-select
             v-model="selectedOrderId"
@@ -108,12 +111,12 @@
         </el-row>
       </div>
 
-      <el-card shadow="never" style="margin-bottom: 16px">
+      <el-card shadow="never" class="section-card overview-card">
         <template #header>
-          <div style="font-weight: 600">进度概览</div>
+          <div class="card-title">进度概览</div>
         </template>
 
-        <el-steps :active="activeStep" align-center finish-status="success">
+        <el-steps class="progress-steps" :active="activeStep" align-center finish-status="success">
           <el-step title="待接单" />
           <el-step title="已接单" />
           <el-step title="服务中" />
@@ -121,9 +124,9 @@
         </el-steps>
       </el-card>
 
-      <el-card shadow="never">
+      <el-card shadow="never" class="section-card order-info-card">
         <template #header>
-          <div style="font-weight: 600">订单信息</div>
+          <div class="card-title">订单信息</div>
         </template>
 
         <el-descriptions :column="2" border>
@@ -134,7 +137,7 @@
             </span>
           </el-descriptions-item>
           <el-descriptions-item label="宠物信息">
-            {{ currentOrder.petName }} / {{ currentOrder.petType }}
+            {{ currentOrder.petName }} / {{ getPetTypeLabel(currentOrder.petType) || currentOrder.petType }}
           </el-descriptions-item>
           <el-descriptions-item label="联系人">
             {{ currentOrder.contactName }}（{{ currentOrder.contactPhone }}）
@@ -152,7 +155,7 @@
       </el-card>
 
       <!-- 骨灰寄存模块 -->
-      <el-card shadow="never" style="margin-top: 16px">
+      <el-card shadow="never" class="section-card urn-card">
         <template #header>
           <div class="section-header">
             <span class="section-title">骨灰寄存</span>
@@ -196,7 +199,7 @@
       </el-card>
 
       <!-- 满意度评价模块（仅已完成订单） -->
-      <el-card v-if="currentOrder.status === 3" shadow="never" style="margin-top: 16px">
+      <el-card v-if="currentOrder.status === 3" shadow="never" class="section-card review-card">
         <template #header>
           <div class="section-header">
             <span class="section-title">满意度评价</span>
@@ -271,6 +274,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { orderApi, type OrderVO } from "@/api/order";
 import { urnStorageApi, type UrnStorageCreateDTO, type UrnStorageVO } from "@/api/urnStorage";
+import { getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 
@@ -459,29 +463,102 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 与预约服务页统一的基础配色（Element Plus 风格）
+$primary-color: #409eff; // 主按钮蓝色
+$success-color: #67c23a; // 成功/绿色
+$warning-color: #e6a23c; // 警告/金色
+$light-bg: #ffffff;
+$white: #ffffff;
+$text-primary: #303133; // 深灰
+$text-secondary: #606266; // 中灰
+$text-light: #909399; // 浅灰
+$border-color: #ebeef5; // 边框色
+
 .service-progress-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 8px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+  }
 }
 
 .progress-intro {
-  margin: 12px 0 20px;
+  text-align: center;
+  margin: 18px 0 26px;
 
   h2 {
-    color: #303133;
-    margin: 0 0 8px;
+    color: $text-primary;
+    margin: 0 0 10px;
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    position: relative;
+    display: inline-block;
+
+    &::after {
+      content: "";
+      display: block;
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, $primary-color, $success-color);
+      margin: 14px auto 0;
+      border-radius: 2px;
+    }
   }
 
   p {
-    color: #606266;
-    font-size: 14px;
+    color: $text-secondary;
+    font-size: 16px;
     margin: 0;
+    line-height: 1.8;
   }
 }
 
-.order-selector-card {
+.section-card {
+  border-radius: 16px;
+  border: 1px solid $border-color;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  background: $white;
   margin-bottom: 16px;
+
+  :deep(.el-card__header) {
+    background: #f5f7fa;
+    border-bottom: 1px solid $border-color;
+    padding: 18px 22px;
+  }
+
+  :deep(.el-card__body) {
+    padding: 22px;
+  }
+}
+
+.card-title {
+  font-weight: 800;
+  color: $text-primary;
+  letter-spacing: 0.2px;
+}
+
+.order-selector-form {
+  :deep(.el-form-item__label) {
+    color: $text-secondary;
+    font-weight: 600;
+  }
+
+  :deep(.el-button--primary) {
+    background-color: $primary-color;
+    border-color: $primary-color;
+  }
 }
 
 .section-header {
@@ -493,7 +570,8 @@ onMounted(() => {
 }
 
 .section-title {
-  font-weight: 700;
+  font-weight: 800;
+  color: $text-primary;
 }
 
 .section-actions {
@@ -503,7 +581,7 @@ onMounted(() => {
 }
 
 .form-tip {
-  color: #909399;
+  color: $text-light;
   font-size: 12px;
 }
 
@@ -517,11 +595,11 @@ onMounted(() => {
     flex-wrap: wrap;
   }
   .label {
-    color: #606266;
+    color: $text-secondary;
     min-width: 48px;
   }
   .value {
-    color: #303133;
+    color: $text-primary;
   }
 }
 
@@ -532,6 +610,7 @@ onMounted(() => {
 .status-card {
   border-radius: 14px;
   overflow: hidden;
+  border: 1px solid $border-color;
 
   :deep(.el-card__body) {
     padding: 18px;
@@ -550,15 +629,17 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.04);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .status-icon {
     font-size: 28px;
+    color: $primary-color;
   }
 
   .status-label {
-    color: #606266;
+    color: $text-secondary;
     font-size: 12px;
     margin-bottom: 6px;
   }
@@ -566,32 +647,115 @@ onMounted(() => {
   .status-value {
     font-size: 18px;
     font-weight: 700;
-    color: #303133;
+    color: $text-primary;
     margin-bottom: 6px;
   }
 
   .status-desc {
-    color: #909399;
+    color: $text-light;
     font-size: 12px;
   }
 }
 
 .status-card-primary {
-  background: linear-gradient(135deg, #fff9e6 0%, #fff4d6 100%);
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.1) 0%, rgba(103, 194, 58, 0.08) 100%);
 }
 
 .status-card-time {
-  background: linear-gradient(135deg, #fef2f8 0%, #fce7f3 100%);
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(230, 162, 60, 0.06) 100%);
+
+  .status-icon {
+    color: $warning-color;
+  }
 }
 
 .status-card-personnel {
-  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.1) 100%);
+
+  .status-icon {
+    color: $success-color;
+  }
 
   &.no-assigned {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: #f5f7fa;
+
+    .status-icon {
+      color: $text-light;
+    }
   }
 }
-</style>
 
+.overview-card {
+  :deep(.el-step__title) {
+    color: $text-secondary;
+  }
+
+  :deep(.el-step__title.is-process) {
+    color: $text-primary;
+    font-weight: 800;
+  }
+
+  :deep(.el-step__head.is-process) {
+    color: $primary-color;
+    border-color: rgba(64, 158, 255, 0.35);
+  }
+
+  :deep(.el-step__head.is-finish) {
+    color: $success-color;
+    border-color: rgba(103, 194, 58, 0.55);
+  }
+
+  :deep(.el-step__line) {
+    background-color: $border-color;
+  }
+}
+
+.order-info-card,
+.urn-card,
+.review-card {
+  :deep(.el-descriptions__label.is-bordered-label) {
+    background: #f5f7fa;
+    color: $text-secondary;
+    font-weight: 700;
+  }
+
+  :deep(.el-descriptions__content.is-bordered-content) {
+    color: $text-primary;
+  }
+
+  :deep(.el-tag) {
+    border-radius: 999px;
+  }
+
+  :deep(.el-button--primary) {
+    background-color: $primary-color;
+    border-color: $primary-color;
+
+    &:hover {
+      filter: brightness(1.05);
+    }
+  }
+}
+
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 18px 22px;
+  margin-right: 0;
+
+  .el-dialog__title {
+    color: $white;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .el-dialog__headerbtn .el-dialog__close {
+    color: $white;
+  }
+}
+
+:deep(.el-dialog__body) {
+  padding: 22px;
+}
+</style>
 
 

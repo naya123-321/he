@@ -36,7 +36,7 @@
               <span class="duration">{{ appointment.duration }}分钟</span>
             </div>
             <div class="appointment-info">
-              <h4>{{ appointment.petName }} <span class="pet-type">({{ appointment.petType }})</span></h4>
+              <h4>{{ appointment.petName }} <span class="pet-type">({{ getPetTypeLabel(appointment.petType) || appointment.petType }})</span></h4>
               <p>{{ appointment.serviceType }}</p>
               <p class="contact-info">
                 <span>联系人：{{ appointment.contactName }}</span>
@@ -61,6 +61,7 @@ import { ElPageHeader, ElCalendar, ElEmpty, ElMessage } from 'element-plus';
 import dayjs from 'dayjs';
 import { orderApi } from '@/api/order';
 import { useUserStore } from '@/store/user';
+import { getPetTypeLabel } from '@/constants/petTypes';
 
 const router = useRouter();
 const userStore = useUserStore();
@@ -233,90 +234,174 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .schedule-container {
-  padding: 20px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
   
   .content-wrapper {
-    margin-top: 20px;
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  :deep(.el-calendar) {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+
+    .el-calendar__header {
+      background: $bg-light;
+      padding: 16px 20px;
+      border-bottom: 1px solid $border-color;
+    }
+
+    .el-calendar__body {
+      padding: 12px;
+    }
+
+    .el-calendar-table {
+      .el-calendar-day {
+        padding: 0;
+      }
+    }
   }
   
   .calendar-day {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 4px;
+    padding: 8px 4px;
     cursor: pointer;
-    border-radius: 4px;
-    transition: all 0.2s;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    min-height: 60px;
+    justify-content: center;
     
     &:hover {
-      background-color: #f5f7fa;
+      background-color: rgba(64, 158, 255, 0.1);
+      transform: scale(1.05);
     }
     
     &.has-appointments {
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.1) 0%, rgba(103, 194, 58, 0.05) 100%);
+      
       .day-number {
-        color: #409eff;
-        font-weight: 600;
+        color: $primary-color;
+        font-weight: 700;
+        font-size: 16px;
       }
     }
     
     &.selected-date {
-      background-color: #ecf5ff;
-      border: 1px solid #409eff;
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.2) 0%, rgba(102, 126, 234, 0.15) 100%);
+      border: 2px solid $primary-color;
+      box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
       
       .day-number {
-        color: #409eff;
-        font-weight: 600;
+        color: $primary-color;
+        font-weight: 700;
+        font-size: 18px;
       }
     }
     
     .day-number {
       font-size: 14px;
       font-weight: 500;
+      color: $text-primary;
+      margin-bottom: 4px;
     }
     
     .appointments-count {
-      font-size: 10px;
-      color: #409eff;
+      font-size: 11px;
+      color: $primary-color;
       margin-top: 4px;
-      font-weight: 500;
+      font-weight: 600;
+      background: rgba(64, 158, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 999px;
     }
   }
   
   .appointments-list {
-    margin-top: 30px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 24px;
     
     .list-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid $border-color;
       
       h3 {
         margin: 0;
-        font-size: 18px;
-        color: #303133;
+        font-size: 20px;
+        color: $text-primary;
+        font-weight: 700;
+      }
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
       }
     }
     
     .appointments {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
     }
     
     .appointment-item {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: $bg-white;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid $border-color;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
       display: flex;
-      gap: 16px;
+      gap: 20px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
       
       &:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+        border-color: $primary-color;
       }
       
       .appointment-time {
@@ -324,21 +409,23 @@ onUnmounted(() => {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-width: 80px;
-        padding: 8px;
-        background: #f5f7fa;
-        border-radius: 4px;
+        min-width: 100px;
+        padding: 12px;
+        background: linear-gradient(135deg, rgba(64, 158, 255, 0.1) 0%, rgba(102, 126, 234, 0.08) 100%);
+        border-radius: 10px;
+        border-left: 3px solid $primary-color;
         
         .time {
-          font-size: 16px;
-          font-weight: bold;
-          color: #303133;
+          font-size: 20px;
+          font-weight: 700;
+          color: $primary-color;
         }
         
         .duration {
           font-size: 12px;
-          color: #909399;
-          margin-top: 4px;
+          color: $text-light;
+          margin-top: 6px;
+          font-weight: 500;
         }
       }
       
@@ -346,65 +433,80 @@ onUnmounted(() => {
         flex: 1;
         
         h4 {
-          margin: 0 0 8px;
-          font-size: 16px;
-          color: #303133;
+          margin: 0 0 10px;
+          font-size: 18px;
+          color: $text-primary;
+          font-weight: 600;
         }
         
         p {
-          margin: 0 0 8px;
+          margin: 0 0 10px;
           font-size: 14px;
-          color: #606266;
+          color: $text-secondary;
+          line-height: 1.6;
         }
         
         .pet-type {
           font-size: 14px;
-          color: #909399;
+          color: $text-light;
           font-weight: normal;
         }
         
         .contact-info {
           font-size: 13px;
-          color: #606266;
-          margin: 4px 0;
+          color: $text-secondary;
+          margin: 8px 0;
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
         }
         
         .address {
-          font-size: 12px;
-          color: #909399;
-          margin: 4px 0;
+          font-size: 13px;
+          color: $text-light;
+          margin: 8px 0;
+          padding: 8px 12px;
+          background: $bg-light;
+          border-radius: 6px;
+          border-left: 3px solid $primary-color;
         }
         
         .status {
           display: inline-block;
-          padding: 2px 8px;
-          border-radius: 4px;
+          padding: 4px 12px;
+          border-radius: 999px;
           font-size: 12px;
-          margin-top: 8px;
+          font-weight: 500;
+          margin-top: 12px;
           
           &.pending {
-            background: #fdf6ec;
-            color: #e6a23c;
+            background: rgba(230, 162, 60, 0.1);
+            color: $warning-color;
+            border: 1px solid rgba(230, 162, 60, 0.3);
           }
           
           &.confirmed {
-            background: #f0f9ff;
-            color: #409eff;
+            background: rgba(64, 158, 255, 0.1);
+            color: $primary-color;
+            border: 1px solid rgba(64, 158, 255, 0.3);
           }
           
           &.in_progress {
-            background: #f0f9ff;
-            color: #67c23a;
+            background: rgba(103, 194, 58, 0.1);
+            color: $success-color;
+            border: 1px solid rgba(103, 194, 58, 0.3);
           }
           
           &.completed {
-            background: #f0f9ff;
-            color: #67c23a;
+            background: rgba(103, 194, 58, 0.1);
+            color: $success-color;
+            border: 1px solid rgba(103, 194, 58, 0.3);
           }
           
           &.cancelled {
-            background: #fef0f0;
-            color: #f56c6c;
+            background: rgba(245, 108, 108, 0.1);
+            color: $danger-color;
+            border: 1px solid rgba(245, 108, 108, 0.3);
           }
         }
       }

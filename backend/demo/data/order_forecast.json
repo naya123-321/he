@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-12-18T16:01:10",
+  "generatedAt": "2025-12-19T11:04:06",
   "historyDays": 30,
   "model": {
     "type": "ARIMA",
@@ -12,10 +12,6 @@
     "confidence": 0.95
   },
   "history": [
-    {
-      "date": "2025-11-19",
-      "count": 0
-    },
     {
       "date": "2025-11-20",
       "count": 0
@@ -130,16 +126,14 @@
     },
     {
       "date": "2025-12-18",
+      "count": 1
+    },
+    {
+      "date": "2025-12-19",
       "count": 0
     }
   ],
   "forecast": [
-    {
-      "date": "2025-12-19",
-      "predicted": 0,
-      "lower": 0,
-      "upper": 1
-    },
     {
       "date": "2025-12-20",
       "predicted": 0,
@@ -148,6 +142,12 @@
     },
     {
       "date": "2025-12-21",
+      "predicted": 0,
+      "lower": 0,
+      "upper": 2
+    },
+    {
+      "date": "2025-12-22",
       "predicted": 0,
       "lower": 0,
       "upper": 2

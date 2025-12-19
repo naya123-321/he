@@ -176,9 +176,9 @@
       </el-col>
     </el-row>
 
-    <!-- 服务类型分布（下移） -->
+    <!-- 服务类型分布和宠物类型分布 -->
     <el-row :gutter="20" class="charts-row">
-      <el-col :xs="24">
+      <el-col :xs="24" :lg="12">
         <el-card shadow="hover" class="chart-card">
           <template #header>
             <div class="card-header">
@@ -189,6 +189,22 @@
             <div
               ref="serviceTypeChartContainer"
               v-loading="serviceTypeChartLoading"
+              style="width: 100%; height: 320px;"
+            ></div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :lg="12">
+        <el-card shadow="hover" class="chart-card">
+          <template #header>
+            <div class="card-header">
+              <h3>🐾 宠物类型分布</h3>
+            </div>
+          </template>
+          <div class="chart-container">
+            <div
+              ref="petTypeChartContainer"
+              v-loading="petTypeChartLoading"
               style="width: 100%; height: 320px;"
             ></div>
           </div>
@@ -226,7 +242,7 @@
               <div class="order-details">
                 <div class="pet-info">
                   <span class="pet-name">{{ order.petName }}</span>
-                  <span class="pet-type">({{ order.petType }})</span>
+                  <span class="pet-type">({{ getPetTypeLabel(order.petType) || order.petType }})</span>
                 </div>
                 <el-tag :type="getStatusType(order.status)">
                   {{ getStatusText(order.status) }}
@@ -297,6 +313,7 @@ import { orderApi } from "@/api/order";
 import { getUserList } from "@/api/user";
 import { memorialApi } from "@/api/memorial";
 import * as echarts from "echarts";
+import { getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 
@@ -351,6 +368,12 @@ const serviceTypeChartContainer = ref<HTMLElement | null>(null);
 const serviceTypeChartLoading = ref(false);
 let serviceTypeChartInstance: echarts.ECharts | null = null;
 let serviceTypeChartResizeHandler: (() => void) | null = null;
+
+// 宠物类型分布图表
+const petTypeChartContainer = ref<HTMLElement | null>(null);
+const petTypeChartLoading = ref(false);
+let petTypeChartInstance: echarts.ECharts | null = null;
+let petTypeChartResizeHandler: (() => void) | null = null;
 
 // 最近订单
 const recentOrders = ref<any[]>([]);
@@ -473,6 +496,7 @@ onMounted(async () => {
   await nextTick();
   await loadOrderTrend();
   await loadServiceTypeDistribution();
+  await loadPetTypeDistribution();
 });
 
 import { dashboardApi, type OrderForecastResult } from "@/api/dashboard";
@@ -548,6 +572,10 @@ onUnmounted(() => {
     window.removeEventListener('resize', serviceTypeChartResizeHandler);
     serviceTypeChartResizeHandler = null;
   }
+  if (petTypeChartResizeHandler) {
+    window.removeEventListener('resize', petTypeChartResizeHandler);
+    petTypeChartResizeHandler = null;
+  }
   
   // 销毁图表实例
   if (orderTrendChartInstance) {
@@ -557,6 +585,10 @@ onUnmounted(() => {
   if (serviceTypeChartInstance) {
     serviceTypeChartInstance.dispose();
     serviceTypeChartInstance = null;
+  }
+  if (petTypeChartInstance) {
+    petTypeChartInstance.dispose();
+    petTypeChartInstance = null;
   }
 });
 
@@ -947,6 +979,220 @@ const renderServiceTypeChart = (distribution: any[], totalOrders: number) => {
     serviceTypeChartInstance?.resize();
   };
   window.addEventListener('resize', serviceTypeChartResizeHandler);
+};
+
+// 加载宠物类型分布数据
+const loadPetTypeDistribution = async () => {
+  if (!petTypeChartContainer.value) return;
+  
+  petTypeChartLoading.value = true;
+  try {
+    const res = await orderApi.getPetTypeDistribution();
+    if (res && res.code === 200 && res.data) {
+      const { distribution, totalOrders } = res.data;
+      renderPetTypeChart(distribution, totalOrders);
+    } else {
+      console.error("获取宠物类型分布失败");
+    }
+  } catch (error) {
+    console.error("加载宠物类型分布失败:", error);
+    // 如果API不存在，从订单数据中统计
+    await loadPetTypeDistributionFromOrders();
+  } finally {
+    petTypeChartLoading.value = false;
+  }
+};
+
+// 从订单数据中统计宠物类型分布（备用方案）
+const loadPetTypeDistributionFromOrders = async () => {
+  try {
+    const res = await orderApi.getOrderList({
+      pageNum: 1,
+      pageSize: 1000, // 获取足够多的订单用于统计
+    });
+    
+    if (res && res.code === 200 && res.data) {
+      const orders = res.data.records || [];
+      const petTypeMap: Record<string, number> = {};
+      
+      orders.forEach((order: any) => {
+        if (order.petType) {
+          petTypeMap[order.petType] = (petTypeMap[order.petType] || 0) + 1;
+        }
+      });
+      
+      const distribution = Object.entries(petTypeMap)
+        .map(([petType, count]) => ({ petType, count: count as number }))
+        .sort((a, b) => b.count - a.count);
+      
+      renderPetTypeChart(distribution, orders.length);
+    }
+  } catch (error) {
+    console.error("从订单数据统计宠物类型分布失败:", error);
+  }
+};
+
+// 渲染宠物类型分布图表（柱状图）
+const renderPetTypeChart = (distribution: Array<{ petType: string; count: number }>, totalOrders: number) => {
+  if (!petTypeChartContainer.value) return;
+  
+  // 初始化图表实例
+  if (!petTypeChartInstance) {
+    petTypeChartInstance = echarts.init(petTypeChartContainer.value);
+  }
+  
+  // 过滤掉没有订单的宠物类型（count为0的）
+  const filteredDistribution = distribution.filter(item => item.count > 0);
+  
+  // 如果没有数据，显示空状态
+  if (filteredDistribution.length === 0) {
+    petTypeChartInstance.setOption({
+      title: {
+        text: '暂无数据',
+        left: 'center',
+        top: 'center',
+        textStyle: {
+          color: '#909399',
+          fontSize: 14,
+        },
+      },
+    });
+    return;
+  }
+  
+  // 定义颜色方案（渐变色）
+  const colors = [
+    { start: '#409eff', end: '#66b1ff' },
+    { start: '#67c23a', end: '#85ce61' },
+    { start: '#e6a23c', end: '#ebb563' },
+    { start: '#f56c6c', end: '#f78989' },
+    { start: '#909399', end: '#a6a9ad' },
+    { start: '#5470c6', end: '#7389db' },
+    { start: '#91cc75', end: '#a8d88f' },
+    { start: '#fac858', end: '#fbd47a' },
+    { start: '#ee6666', end: '#f28585' },
+    { start: '#73c0de', end: '#8dd0e8' },
+  ];
+  
+  // 将英文宠物类型转换为中文
+  const petTypeNames = filteredDistribution.map(item => getPetTypeLabel(item.petType) || item.petType);
+  const counts = filteredDistribution.map(item => item.count);
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow',
+      },
+      formatter: (params: any) => {
+        const param = params[0];
+        const percent = totalOrders > 0 
+          ? ((param.value / totalOrders) * 100).toFixed(1) 
+          : '0';
+        return `${param.name}<br/>订单数: ${param.value}<br/>占比: ${percent}%`;
+      },
+    },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '10%',
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      data: petTypeNames,
+      axisLine: {
+        lineStyle: {
+          color: '#e0e0e0',
+        },
+      },
+      axisLabel: {
+        color: '#606266',
+        fontSize: 12,
+        rotate: petTypeNames.length > 6 ? 15 : 0, // 如果类型太多，旋转标签
+        interval: 0, // 显示所有标签
+      },
+    },
+    yAxis: {
+      type: 'value',
+      name: '订单数',
+      nameTextStyle: {
+        color: '#606266',
+        fontSize: 12,
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#e0e0e0',
+        },
+      },
+      axisLabel: {
+        color: '#606266',
+        fontSize: 12,
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#f0f0f0',
+          type: 'dashed',
+        },
+      },
+    },
+    series: [
+      {
+        name: '订单数',
+        type: 'bar',
+        data: counts.map((count, index) => ({
+          value: count,
+          itemStyle: {
+            color: {
+              type: 'linear',
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                {
+                  offset: 0,
+                  color: colors[index % colors.length].start,
+                },
+                {
+                  offset: 1,
+                  color: colors[index % colors.length].end,
+                },
+              ],
+            },
+            borderRadius: [4, 4, 0, 0], // 顶部圆角
+          },
+        })),
+        barWidth: '60%',
+        label: {
+          show: true,
+          position: 'top',
+          color: '#303133',
+          fontSize: 12,
+          fontWeight: 500,
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.3)',
+          },
+        },
+      },
+    ],
+  };
+  
+  petTypeChartInstance.setOption(option);
+  
+  // 响应式调整
+  if (petTypeChartResizeHandler) {
+    window.removeEventListener('resize', petTypeChartResizeHandler);
+  }
+  petTypeChartResizeHandler = () => {
+    petTypeChartInstance?.resize();
+  };
+  window.addEventListener('resize', petTypeChartResizeHandler);
 };
 </script>
 

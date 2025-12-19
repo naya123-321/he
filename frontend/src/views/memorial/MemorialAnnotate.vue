@@ -364,40 +364,115 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .memorial-annotate-container {
-  padding: 16px;
+  padding: 30px 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
 
   .toolbar {
-    margin-top: 12px;
-    margin-bottom: 12px;
-    .toolbar-left {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    background: $bg-white;
+    padding: 16px 20px;
+
+    :deep(.el-card__body) {
+      padding: 0;
     }
-    .toolbar-right {
+
+    .toolbar-left {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
+      margin-bottom: 12px;
+
+      :deep(.el-tag) {
+        border-radius: 999px;
+        font-weight: 500;
+      }
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+
+      :deep(.el-select),
+      :deep(.el-input-number),
+      :deep(.el-color-picker) {
+        border-radius: 8px;
+      }
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
+
+        &.el-button--primary {
+          background-color: $primary-color;
+          border-color: $primary-color;
+
+          &:hover {
+            filter: brightness(1.05);
+          }
+        }
+      }
     }
   }
 
   .stage {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    background: $bg-white;
+    overflow: hidden;
+
+    :deep(.el-card__body) {
+      padding: 0;
+    }
+
     .canvas-wrap {
       display: flex;
       justify-content: center;
-      padding: 12px;
+      padding: 20px;
       overflow: auto;
+      background: $bg-light;
+      min-height: 500px;
     }
+
     .canvas {
       max-width: 100%;
-      border: 1px solid #ebeef5;
-      border-radius: 10px;
-      background: #fff;
+      border: 2px solid $border-color;
+      border-radius: 12px;
+      background: $bg-white;
       cursor: crosshair;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
   }
 }

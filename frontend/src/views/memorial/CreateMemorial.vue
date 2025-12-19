@@ -825,18 +825,71 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .create-memorial-container {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 30px 20px;
+  max-width: 1400px;
   margin: 0 auto;
   min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
 
   .steps-wrapper {
-    background: #fff;
+    background: $bg-white;
     padding: 30px 20px;
-    border-radius: 8px;
+    border-radius: 12px;
     margin: 20px 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    :deep(.el-steps) {
+      .el-step__title {
+        color: $text-secondary;
+        font-weight: 500;
+
+        &.is-process {
+          color: $primary-color;
+          font-weight: 600;
+        }
+
+        &.is-finish {
+          color: $text-primary;
+        }
+      }
+
+      .el-step__head.is-process {
+        color: $primary-color;
+        border-color: $primary-color;
+      }
+
+      .el-step__head.is-finish {
+        color: $success-color;
+        border-color: $success-color;
+      }
+
+      .el-step__line {
+        background-color: $border-color;
+      }
+    }
   }
 
   .step-content {
@@ -845,23 +898,31 @@ onMounted(async () => {
 
     .step-header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid $border-color;
 
       h2 {
-        font-size: 28px;
-        color: #303133;
-        margin-bottom: 10px;
+        font-size: 32px;
+        color: $text-primary;
+        margin-bottom: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
       }
 
       .step-description {
         font-size: 16px;
-        color: #909399;
+        color: $text-secondary;
         margin: 0;
+        line-height: 1.6;
       }
     }
 
     .template-categories {
       margin-bottom: 30px;
+      background: $bg-light;
+      padding: 16px;
+      border-radius: 12px;
       
       :deep(.el-tabs__header) {
         margin-bottom: 0;
@@ -870,6 +931,7 @@ onMounted(async () => {
       :deep(.el-tabs__nav-wrap) {
         &::after {
           height: 1px;
+          background-color: $border-color;
         }
       }
       
@@ -879,16 +941,17 @@ onMounted(async () => {
         height: 50px;
         line-height: 50px;
         font-weight: 500;
+        color: $text-secondary;
         
         &.is-active {
-          color: #409eff;
+          color: $primary-color;
           font-weight: 600;
         }
       }
       
       :deep(.el-tabs__active-bar) {
         height: 3px;
-        background: #409eff;
+        background: $primary-color;
       }
     }
 
@@ -899,35 +962,40 @@ onMounted(async () => {
       margin-bottom: 40px;
 
       .template-card {
-        border: 2px solid #ebeef5;
+        border: 2px solid $border-color;
         border-radius: 12px;
         overflow: hidden;
         cursor: pointer;
-        transition: all 0.3s;
-        background: #fff;
+        transition: all 0.3s ease;
+        background: $bg-white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 
         &:hover {
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
           transform: translateY(-4px);
-          border-color: #409eff;
+          border-color: $primary-color;
         }
 
         &.selected {
-          border-color: #409eff;
-          box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2);
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.2), 0 4px 16px rgba(64, 158, 255, 0.15);
         }
 
         .template-preview {
           position: relative;
-          height: 220px;
+          height: 240px;
           overflow: hidden;
-          background: #f5f7fa;
+          background: $bg-light;
 
           img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.3s;
+            transition: transform 0.3s ease;
+          }
+
+          &:hover img {
+            transform: scale(1.05);
           }
 
           .template-placeholder {
@@ -936,7 +1004,7 @@ onMounted(async () => {
             align-items: center;
             justify-content: center;
             height: 100%;
-            color: #909399;
+            color: $text-light;
 
             span {
               margin-top: 10px;
@@ -946,31 +1014,38 @@ onMounted(async () => {
 
           .selected-badge {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 32px;
-            height: 32px;
-            background: #409eff;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: $success-color;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 18px;
+            font-size: 20px;
+            box-shadow: 0 2px 8px rgba(103, 194, 58, 0.4);
           }
 
           .preview-badge {
             position: absolute;
-            left: 10px;
-            top: 10px;
-            padding: 6px 10px;
+            left: 12px;
+            top: 12px;
+            padding: 6px 12px;
             border-radius: 8px;
-            background: rgba(0, 0, 0, 0.45);
+            background: rgba(0, 0, 0, 0.6);
             color: #fff;
             font-size: 12px;
+            font-weight: 500;
             line-height: 1;
             cursor: pointer;
             user-select: none;
+            transition: background 0.3s;
+
+            &:hover {
+              background: rgba(0, 0, 0, 0.8);
+            }
           }
         }
 
@@ -978,18 +1053,19 @@ onMounted(async () => {
           padding: 20px;
 
           h4 {
-            margin: 0 0 8px;
+            margin: 0 0 10px;
             font-size: 18px;
-            color: #303133;
+            color: $text-primary;
             font-weight: 600;
+            line-height: 1.4;
           }
 
           p {
-            margin: 0 0 15px;
+            margin: 0 0 16px;
             font-size: 14px;
-            color: #606266;
-            line-height: 1.6;
-            height: 44px;
+            color: $text-secondary;
+            line-height: 1.8;
+            height: 50px;
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -1000,10 +1076,17 @@ onMounted(async () => {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+
+            :deep(.el-tag) {
+              border-radius: 999px;
+              font-weight: 500;
+            }
 
             .price {
               font-weight: bold;
-              color: #e6a23c;
+              color: $warning-color;
               font-size: 16px;
             }
           }
@@ -1013,52 +1096,120 @@ onMounted(async () => {
 
     .upload-card {
       margin-bottom: 30px;
+      border-radius: 12px;
+      border: 1px solid $border-color;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      :deep(.el-card__body) {
+        padding: 24px;
+      }
 
       .photo-uploader {
         :deep(.el-upload) {
-          border: 2px dashed #d9d9d9;
-          border-radius: 8px;
+          border: 2px dashed $border-color;
+          border-radius: 10px;
           cursor: pointer;
-          transition: all 0.3s;
+          transition: all 0.3s ease;
+          background: $bg-light;
 
           &:hover {
-            border-color: #409eff;
+            border-color: $primary-color;
+            background: rgba(64, 158, 255, 0.05);
+          }
+        }
+
+        :deep(.el-upload-list--picture-card) {
+          .el-upload-list__item {
+            border-radius: 10px;
+            border: 1px solid $border-color;
           }
         }
 
         .upload-tip {
-          margin-top: 15px;
+          margin-top: 20px;
           text-align: center;
-          color: #909399;
+          color: $text-light;
           font-size: 14px;
+          line-height: 1.8;
 
           p {
-            margin: 5px 0;
+            margin: 6px 0;
           }
         }
       }
     }
 
-    .form-card {
-      margin-bottom: 30px;
+    .form-card,
+    .memorial-info-card {
+      margin-bottom: 24px;
+      border-radius: 12px;
+      border: 1px solid $border-color;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      :deep(.el-card__header) {
+        background: $bg-light;
+        border-bottom: 1px solid $border-color;
+        padding: 16px 20px;
+
+        .card-header {
+          font-weight: 600;
+          color: $text-primary;
+          font-size: 16px;
+        }
+      }
+
+      :deep(.el-card__body) {
+        padding: 24px;
+      }
+
+      :deep(.el-form-item__label) {
+        color: $text-secondary;
+        font-weight: 500;
+      }
+
+      :deep(.el-input__wrapper),
+      :deep(.el-textarea__inner),
+      :deep(.el-select .el-input__wrapper),
+      :deep(.el-date-editor),
+      :deep(.el-input-number) {
+        border-radius: 8px;
+      }
     }
 
     .review-card {
       margin-bottom: 30px;
+      border-radius: 12px;
+      border: 1px solid $border-color;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+      :deep(.el-card__body) {
+        padding: 24px;
+      }
 
       .review-content {
         .review-section {
+          margin-bottom: 24px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
           h3 {
-            font-size: 18px;
-            color: #303133;
+            font-size: 20px;
+            color: $text-primary;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid $primary-color;
+            font-weight: 600;
           }
 
           .review-item {
             display: flex;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: $bg-light;
+            border-radius: 8px;
+            border-left: 3px solid $primary-color;
 
             &.full-width {
               flex-direction: column;
@@ -1066,17 +1217,18 @@ onMounted(async () => {
 
             .label {
               font-weight: 600;
-              color: #606266;
-              min-width: 120px;
+              color: $text-secondary;
+              min-width: 140px;
             }
 
             .value {
-              color: #303133;
+              color: $text-primary;
+              flex: 1;
             }
 
             .memory-text {
-              color: #303133;
-              line-height: 1.8;
+              color: $text-primary;
+              line-height: 2;
               white-space: pre-wrap;
               margin: 0;
             }
@@ -1090,19 +1242,67 @@ onMounted(async () => {
       justify-content: center;
       margin-top: 40px;
       gap: 20px;
+      padding-top: 30px;
+      border-top: 2px solid $border-color;
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 12px 32px;
+
+        &.el-button--primary {
+          background-color: $primary-color;
+          border-color: $primary-color;
+
+          &:hover {
+            filter: brightness(1.05);
+          }
+        }
+      }
     }
 
     .success-container {
-      padding: 60px 20px;
+      padding: 80px 20px;
       text-align: center;
 
       .success-actions {
-        margin-top: 30px;
+        margin-top: 40px;
         display: flex;
         justify-content: center;
-        gap: 15px;
+        gap: 16px;
         flex-wrap: wrap;
+
+        :deep(.el-button) {
+          border-radius: 8px;
+          font-weight: 500;
+        }
       }
+    }
+  }
+
+  // 优化对话框样式
+  :deep(.el-dialog) {
+    border-radius: 12px;
+
+    .el-dialog__header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px 24px;
+      border-radius: 12px 12px 0 0;
+
+      .el-dialog__title {
+        color: $bg-white;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .el-dialog__headerbtn .el-dialog__close {
+        color: $bg-white;
+        font-size: 20px;
+      }
+    }
+
+    .el-dialog__body {
+      padding: 24px;
     }
   }
 }

@@ -577,25 +577,20 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-// 色系与首页保持一致
-$primary-color: #e07a5f; // 柔和珊瑚橙
-$success-color: #81b29a; // 温柔绿
-$warning-color: #f2cc8f; // 奶油杏
-$light-bg: #fff7f2; // 暖白
+// 基础配色（回到原来接近 Element Plus 的默认蓝灰配色）
+$primary-color: #409eff; // 主按钮蓝色
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$light-bg: #ffffff;
 $white: #ffffff;
-$text-primary: #3d2c23; // 暖深棕
-$text-secondary: #6e5a4f;
-$border-color: #f1e3d8;
+$text-primary: #303133;
+$text-secondary: #606266;
+$border-color: #ebeef5;
 
 .book-service-container {
   min-height: calc(100vh - 60px);
   padding: 32px 16px 48px;
-  background: radial-gradient(
-      900px 500px at 75% 35%,
-      rgba(224, 122, 95, 0.16) 0%,
-      rgba(255, 247, 242, 0) 60%
-    ),
-    linear-gradient(135deg, #fff7f2 0%, #fff 100%);
+  background: #ffffff; // 背景改回纯白色，去掉暖橙渐变
 
   :deep(.el-page-header) {
     max-width: 960px;
@@ -609,8 +604,8 @@ $border-color: #f1e3d8;
   background-color: $white;
   border-radius: 18px;
   padding: 28px 28px 32px;
-  box-shadow: 0 14px 34px rgba(61, 44, 35, 0.12);
-  border: 1px solid rgba(241, 227, 216, 0.9);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+  border: 1px solid $border-color;
 }
 
 .booking-intro {
@@ -659,9 +654,9 @@ $border-color: #f1e3d8;
   .package-card {
     background: linear-gradient(
       135deg,
-      rgba(224, 122, 95, 0.08) 0%,
-      rgba(255, 247, 242, 1) 40%,
-      #fff 100%
+      rgba(64, 158, 255, 0.08) 0%,
+      #f5f7fa 40%,
+      #ffffff 100%
     );
     border-radius: 12px;
     border: 1px solid $border-color;

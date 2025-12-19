@@ -560,4 +560,53 @@ public class OrderService {
         
         return result;
     }
+
+    /**
+     * 获取宠物类型分布数据
+     */
+    public Map<String, Object> getPetTypeDistribution() {
+        Map<String, Object> result = new HashMap<>();
+        
+        // 查询每个宠物类型的订单数量（已排除已取消的订单，status = 4，且petType不为空）
+        List<Object[]> distribution = orderRepository.countOrdersByPetType();
+        
+        // 构建分布数据
+        List<Map<String, Object>> distributionList = new ArrayList<>();
+        for (Object[] item : distribution) {
+            String petType = (String) item[0];
+            Long count = ((Number) item[1]).longValue();
+            
+            // 只添加有订单的宠物类型
+            if (count > 0 && petType != null && !petType.trim().isEmpty()) {
+                Map<String, Object> distributionItem = new HashMap<>();
+                distributionItem.put("petType", petType);
+                distributionItem.put("count", count);
+                distributionList.add(distributionItem);
+            }
+        }
+        
+        // 如果没有订单，返回空列表
+        if (distributionList.isEmpty()) {
+            result.put("distribution", new ArrayList<>());
+            result.put("totalOrders", 0);
+            return result;
+        }
+        
+        // 按订单数量降序排序
+        distributionList.sort((a, b) -> {
+            Long countA = ((Number) a.get("count")).longValue();
+            Long countB = ((Number) b.get("count")).longValue();
+            return countB.compareTo(countA);
+        });
+        
+        // 计算总订单数
+        long totalOrders = distributionList.stream()
+            .mapToLong(item -> ((Number) item.get("count")).longValue())
+            .sum();
+        
+        result.put("distribution", distributionList);
+        result.put("totalOrders", totalOrders);
+        
+        return result;
+    }
 }

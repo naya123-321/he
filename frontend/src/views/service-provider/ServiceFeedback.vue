@@ -479,84 +479,277 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .service-feedback-container {
-  padding: 20px;
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
+
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
+
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
+  }
   
   .content-wrapper {
-    margin-top: 20px;
+    margin-top: 24px;
+  }
+
+  .action-bar {
+    margin-bottom: 24px;
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+      padding: 12px 24px;
+
+      &.el-button--primary {
+        background-color: $primary-color;
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  :deep(.el-tabs) {
+    .el-tabs__header {
+      margin-bottom: 24px;
+    }
+
+    .el-tabs__nav-wrap::after {
+      background-color: $border-color;
+    }
+
+    .el-tabs__item {
+      font-size: 16px;
+      font-weight: 500;
+      color: $text-secondary;
+
+      &.is-active {
+        color: $primary-color;
+        font-weight: 600;
+      }
+    }
+
+    .el-tabs__active-bar {
+      background-color: $primary-color;
+      height: 3px;
+    }
   }
   
   .feedback-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
     margin-top: 20px;
   }
   
   .feedback-item {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: $bg-white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+      border-color: $primary-color;
+    }
     
     .feedback-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid $border-color;
       
       h3 {
-        margin: 0;
-        font-size: 16px;
-        color: #303133;
+        margin: 0 0 8px;
+        font-size: 18px;
+        color: $text-primary;
+        font-weight: 600;
+      }
+
+      .pet-name,
+      .user-name {
+        margin: 4px 0;
+        font-size: 14px;
+        color: $text-secondary;
       }
       
       .date {
-        font-size: 12px;
-        color: #909399;
+        font-size: 13px;
+        color: $text-light;
+        font-weight: 500;
+        white-space: nowrap;
       }
     }
     
     .feedback-content {
-      margin: 0 0 12px;
-      font-size: 14px;
-      color: #606266;
-      line-height: 1.6;
-    }
-    
-    .feedback-actions {
-      margin-top: 12px;
-    }
-    
-    .feedback-response {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e4e7ed;
-      
+      margin: 0 0 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.05) 100%);
+      border-radius: 10px;
+      border-left: 3px solid $primary-color;
+
       strong {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
         font-size: 14px;
-        color: #303133;
+        color: $text-primary;
+        font-weight: 600;
       }
       
       p {
         margin: 0;
         font-size: 14px;
-        color: #606266;
-        line-height: 1.6;
+        color: $text-primary;
+        line-height: 2;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    }
+    
+    .feedback-actions {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid $border-color;
+
+      :deep(.el-button) {
+        border-radius: 8px;
+        font-weight: 500;
+      }
+    }
+    
+    .feedback-response {
+      margin-top: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.05) 100%);
+      border-radius: 10px;
+      border-left: 3px solid #667eea;
+      
+      strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: $text-primary;
+        font-weight: 600;
+      }
+      
+      p {
+        margin: 0 0 10px;
+        font-size: 14px;
+        color: $text-primary;
+        line-height: 2;
+        white-space: pre-wrap;
+        word-break: break-word;
       }
 
       .response-time {
-        color: #909399;
+        color: $text-light;
         font-size: 12px;
         display: block;
-        margin-top: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed $border-color;
       }
     }
 
     .feedback-status {
-      margin-top: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid $border-color;
+
+      :deep(.el-tag) {
+        border-radius: 999px;
+        font-weight: 500;
+      }
+    }
+  }
+
+  :deep(.el-pagination) {
+    margin-top: 24px;
+    justify-content: center;
+
+    .el-pager li {
+      border-radius: 6px;
+      margin: 0 4px;
+
+      &.is-active {
+        background-color: $primary-color;
+        color: $bg-white;
+      }
+    }
+
+    .btn-prev,
+    .btn-next {
+      border-radius: 6px;
+    }
+  }
+}
+
+// 优化对话框样式
+:deep(.el-dialog) {
+  border-radius: 12px;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+
+    .el-dialog__title {
+      color: $bg-white;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .el-dialog__headerbtn .el-dialog__close {
+      color: $bg-white;
+      font-size: 20px;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-form-item__label {
+    color: $text-secondary;
+    font-weight: 500;
+  }
+
+  .el-input__wrapper,
+  .el-textarea__inner,
+  .el-select .el-input__wrapper {
+    border-radius: 8px;
+  }
+
+  .el-button {
+    border-radius: 8px;
+    font-weight: 500;
+
+    &.el-button--primary {
+      background-color: $primary-color;
+      border-color: $primary-color;
     }
   }
 }

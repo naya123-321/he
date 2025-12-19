@@ -474,17 +474,17 @@ const goToPackage = (_packageType: string) => {
 </script>
 
 <style scoped lang="scss">
-// 温暖柔和色系
-$primary-color: #e07a5f; // 柔和珊瑚橙
-$success-color: #81b29a; // 温柔绿
-$warning-color: #f2cc8f; // 奶油杏
-$danger-color: #d66b6b;
-$light-bg: #fff7f2; // 暖白
+// 简洁大方的蓝灰配色（与其他页面统一）
+$primary-color: #409eff; // 主按钮蓝色
+$success-color: #67c23a; // 成功/绿色
+$warning-color: #e6a23c; // 警告/金色
+$danger-color: #f56c6c;
+$light-bg: #ffffff;
 $white: #ffffff;
-$text-primary: #3d2c23; // 暖深棕
-$text-secondary: #6e5a4f;
-$text-tertiary: #9a857a;
-$border-color: #f1e3d8;
+$text-primary: #303133; // 深灰
+$text-secondary: #606266; // 中灰
+$text-tertiary: #909399; // 浅灰
+$border-color: #ebeef5;
 
 .section-title {
   text-align: center;
@@ -498,7 +498,7 @@ $border-color: #f1e3d8;
     display: block;
     width: 60px;
     height: 4px;
-    background-color: $primary-color;
+    background: linear-gradient(90deg, $primary-color, $success-color);
     margin: 10px auto 0;
     border-radius: 2px;
   }
@@ -506,13 +506,13 @@ $border-color: #f1e3d8;
 
 .home-container {
   font-family: "Helvetica Neue", Arial, sans-serif;
-  background: $light-bg;
+  background: #ffffff;
 }
 
 /* 导航栏样式 */
 .main-header {
   background-color: $white;
-  box-shadow: 0 2px 14px rgba(61, 44, 35, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   padding: 0;
 
   .container {
@@ -583,8 +583,7 @@ $border-color: #f1e3d8;
 
 /* 主横幅样式 */
 .hero {
-  background: radial-gradient(900px 500px at 75% 35%, rgba(224, 122, 95, 0.16) 0%, rgba(255, 247, 242, 0) 60%),
-    linear-gradient(135deg, #fff7f2 0%, #fff 100%);
+  background: #f5f7fa;
   padding: 72px 0;
 
   .container {
@@ -635,8 +634,8 @@ $border-color: #f1e3d8;
     .hero-carousel {
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 14px 34px rgba(61, 44, 35, 0.12);
-      border: 1px solid rgba(241, 227, 216, 0.9);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid $border-color;
       background: #fff;
     }
 
@@ -651,16 +650,13 @@ $border-color: #f1e3d8;
       overflow: hidden;
 
       &.slide-1 {
-        background: radial-gradient(480px 260px at 30% 30%, rgba(242, 204, 143, 0.35) 0%, rgba(255, 255, 255, 0) 60%),
-          linear-gradient(135deg, rgba(224, 122, 95, 0.12) 0%, rgba(255, 247, 242, 0.2) 60%, rgba(255, 255, 255, 1) 100%);
+        background: linear-gradient(135deg, rgba(64, 158, 255, 0.08) 0%, rgba(103, 194, 58, 0.06) 60%, rgba(255, 255, 255, 1) 100%);
       }
       &.slide-2 {
-        background: radial-gradient(480px 260px at 30% 30%, rgba(129, 178, 154, 0.28) 0%, rgba(255, 255, 255, 0) 60%),
-          linear-gradient(135deg, rgba(242, 204, 143, 0.16) 0%, rgba(255, 247, 242, 0.2) 60%, rgba(255, 255, 255, 1) 100%);
+        background: linear-gradient(135deg, rgba(64, 158, 255, 0.06) 0%, rgba(230, 162, 60, 0.05) 60%, rgba(255, 255, 255, 1) 100%);
       }
       &.slide-3 {
-        background: radial-gradient(480px 260px at 30% 30%, rgba(224, 122, 95, 0.22) 0%, rgba(255, 255, 255, 0) 60%),
-          linear-gradient(135deg, rgba(129, 178, 154, 0.12) 0%, rgba(255, 247, 242, 0.2) 60%, rgba(255, 255, 255, 1) 100%);
+        background: linear-gradient(135deg, rgba(103, 194, 58, 0.06) 0%, rgba(64, 158, 255, 0.05) 60%, rgba(255, 255, 255, 1) 100%);
       }
 
       .slide-meta {
@@ -676,8 +672,8 @@ $border-color: #f1e3d8;
         font-size: 12px;
         font-weight: 700;
         color: $text-primary;
-        background: rgba(255, 255, 255, 0.78);
-        border: 1px solid rgba(241, 227, 216, 0.95);
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid $border-color;
         backdrop-filter: blur(8px);
         flex-shrink: 0;
       }
@@ -695,8 +691,8 @@ $border-color: #f1e3d8;
       .slide-media {
         flex: 1;
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid rgba(241, 227, 216, 0.95);
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid $border-color;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -708,7 +704,7 @@ $border-color: #f1e3d8;
         max-height: 100%;
         object-fit: contain;
         opacity: 0.98;
-        filter: drop-shadow(0 10px 18px rgba(61, 44, 35, 0.12));
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
         user-select: none;
         pointer-events: none;
       }
@@ -718,6 +714,7 @@ $border-color: #f1e3d8;
 
 /* 服务特点样式 */
 .services {
+  background: #ffffff;
   padding: 80px 0;
 
   .container {
@@ -752,21 +749,22 @@ $border-color: #f1e3d8;
 
   .service-card {
     border: none;
-    box-shadow: 0 8px 22px rgba(61, 44, 35, 0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s, box-shadow 0.3s;
     padding: 30px;
     text-align: center;
     border-radius: 14px;
+    background: $white;
 
     &:hover {
       transform: translateY(-5px);
-      box-shadow: 0 14px 30px rgba(61, 44, 35, 0.12);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
 
     .service-icon {
       width: 60px;
       height: 60px;
-      background-color: rgba(224, 122, 95, 0.12);
+      background-color: rgba(64, 158, 255, 0.1);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -794,7 +792,7 @@ $border-color: #f1e3d8;
 
 /* 服务流程样式 */
 .process {
-  background-color: rgba(242, 204, 143, 0.12);
+  background-color: #f5f7fa;
   padding: 80px 0;
 
   .container {
@@ -815,11 +813,11 @@ $border-color: #f1e3d8;
   }
 
   .process-card {
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(241, 227, 216, 0.95);
+    background: $white;
+    border: 1px solid $border-color;
     border-radius: 16px;
     padding: 18px 16px;
-    box-shadow: 0 10px 22px rgba(61, 44, 35, 0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
     position: relative;
     overflow: hidden;
@@ -828,13 +826,13 @@ $border-color: #f1e3d8;
       content: "";
       position: absolute;
       inset: 0;
-      background: radial-gradient(300px 140px at 20% 10%, rgba(224, 122, 95, 0.12) 0%, rgba(255, 255, 255, 0) 60%);
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.05) 0%, rgba(255, 255, 255, 0) 60%);
       pointer-events: none;
     }
 
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 16px 30px rgba(61, 44, 35, 0.12);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
 
     .pc-top {
@@ -855,8 +853,8 @@ $border-color: #f1e3d8;
       justify-content: center;
       font-weight: 800;
       color: $text-primary;
-      background: rgba(242, 204, 143, 0.35);
-      border: 1px solid rgba(241, 227, 216, 0.95);
+      background: rgba(64, 158, 255, 0.1);
+      border: 1px solid $border-color;
     }
 
     .pc-icon {
@@ -866,8 +864,8 @@ $border-color: #f1e3d8;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(224, 122, 95, 0.12);
-      border: 1px solid rgba(241, 227, 216, 0.95);
+      background: rgba(64, 158, 255, 0.1);
+      border: 1px solid $border-color;
 
       :deep(.el-icon) {
         color: $primary-color;
@@ -897,6 +895,7 @@ $border-color: #f1e3d8;
 
 /* 服务套餐样式 */
 .packages {
+  background: #ffffff;
   padding: 80px 0;
 
   .container {
@@ -913,14 +912,15 @@ $border-color: #f1e3d8;
 
   .package-card {
     border: none;
-    box-shadow: 0 8px 22px rgba(61, 44, 35, 0.08);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s, box-shadow 0.3s;
     overflow: hidden;
     border-radius: 14px;
+    background: $white;
 
     &:hover {
       transform: translateY(-5px);
-      box-shadow: 0 14px 30px rgba(61, 44, 35, 0.12);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
     }
 
     .package-header {
@@ -969,13 +969,13 @@ $border-color: #f1e3d8;
 
   .basic-package {
     .package-header {
-      background-color: rgba(242, 204, 143, 0.25);
+      background-color: rgba(64, 158, 255, 0.08);
     }
   }
 
   .standard-package {
     .package-header {
-      background-color: rgba(129, 178, 154, 0.18);
+      background-color: rgba(103, 194, 58, 0.08);
     }
 
     .package-price {
@@ -985,7 +985,7 @@ $border-color: #f1e3d8;
 
   .premium-package {
     .package-header {
-      background-color: rgba(224, 122, 95, 0.12);
+      background-color: rgba(230, 162, 60, 0.08);
     }
 
     .package-price {
@@ -996,7 +996,7 @@ $border-color: #f1e3d8;
 
 /* 页脚样式 */
 .footer {
-  background-color: #3d2c23;
+  background-color: #303133;
   color: $white;
   padding: 40px 0;
   text-align: center;

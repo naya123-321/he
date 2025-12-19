@@ -275,6 +275,11 @@ const isSmartRecommended = (pkg: ServiceTypeVO): boolean => {
   return !!recommendation.value?.recommendedPackageId && pkg.id === recommendation.value?.recommendedPackageId;
 };
 
+// 判断是否推荐（综合：智能推荐 or 数据库推荐）
+const isRecommended = (pkg: ServiceTypeVO): boolean => {
+  return isSmartRecommended(pkg) || isDbRecommended(pkg);
+};
+
 // 返回上一页
 const goBack = () => {
   router.back();
@@ -444,28 +449,29 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-// 治愈系配色方案
-$cream-beige: #FAF4E4; // 米色
-$soft-green: #BBD446; // 柔和绿色
-$warm-yellow: #FCD744; // 温暖黄色
-$coral-orange: #FA7B53; // 珊瑚橙
-$soft-pink: #FFCCCC; // 柔和粉色
-$soft-blue: #CCFFFF; // 柔和蓝色
-$soft-purple: #CCCCFF; // 柔和紫色
-$soft-lime: #CCFF99; // 柔和青柠
-$warm-white: #FFFFFF; // 白色
-$text-dark: #3d2c23; // 深棕色文字（高对比度）
-$text-medium: #6e5a4f; // 中等棕色文字
-$text-light: #9a857a; // 浅棕色文字
-$border-soft: #f1e3d8; // 柔和边框
+// 与预约服务页统一的基础配色（Element Plus 风格）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$light-bg: #ffffff;
+$text-dark: #303133;
+$text-medium: #606266;
+$text-light: #909399;
+$border-soft: #ebeef5;
+
+// 兼容旧变量名（映射到新配色）
+$soft-green: $success-color; // 绿色
+$coral-orange: #fa7b53; // 珊瑚橙（用于特殊强调）
+$warm-yellow: #fcd744; // 暖黄色
+$cream-beige: #faf4e4; // 米色（用于浅色背景）
+$warm-white: #ffffff; // 白色
 
 .service-packages-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 30px 20px;
   min-height: calc(100vh - 100px);
-  background: radial-gradient(900px 500px at 50% 0%, rgba(250, 244, 228, 0.3) 0%, rgba(255, 255, 255, 0) 60%),
-    linear-gradient(135deg, #fff7f2 0%, #faf4e4 50%, #fff 100%);
+  background: #ffffff;
 }
 
 .packages-intro {
@@ -487,7 +493,7 @@ $border-soft: #f1e3d8; // 柔和边框
       display: block;
       width: 80px;
       height: 4px;
-      background: linear-gradient(90deg, $coral-orange, $warm-yellow);
+      background: linear-gradient(90deg, $primary-color, $success-color);
       margin: 15px auto 0;
       border-radius: 2px;
     }
@@ -513,18 +519,18 @@ $border-soft: #f1e3d8; // 柔和边框
   border-radius: 16px;
   margin: 0 0 30px;
   border: 1px solid $border-soft;
-  box-shadow: 0 4px 20px rgba(61, 44, 35, 0.08);
-  background: $warm-white;
+  box-shadow: none;
+  background: $light-bg;
   
   :deep(.el-card__header) {
-    background: linear-gradient(135deg, rgba(187, 212, 70, 0.15) 0%, rgba(252, 215, 68, 0.12) 50%, rgba(250, 123, 83, 0.1) 100%);
-    border-bottom: 2px solid $border-soft;
+    background: linear-gradient(135deg, #f7f1ff 0%, #eef6ff 100%);
+    border-bottom: none;
     padding: 20px 24px;
   }
   
   :deep(.el-card__body) {
     padding: 24px;
-    background: $warm-white;
+    background: $light-bg;
   }
 }
 
@@ -601,8 +607,8 @@ $border-soft: #f1e3d8; // 柔和边框
     gap: 10px;
 
     :deep(.el-button--primary) {
-      background-color: $coral-orange;
-      border-color: $coral-orange;
+      background-color: $primary-color;
+      border-color: $primary-color;
       color: #fff;
 
       &:hover {
@@ -621,38 +627,19 @@ $border-soft: #f1e3d8; // 柔和边框
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 24px rgba(61, 44, 35, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   }
 
   :deep(.el-card__header) {
-    // 顶部改为柔和的米色纯色背景，避免刺眼渐变
-    background-color: $cream-beige;
-    color: $text-dark;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
     padding: 20px 22px;
     border-bottom: none;
   }
 
   :deep(.el-card__body) {
     padding: 24px;
-    background: $warm-white;
-
-    // 卡片内部主按钮（选择套餐）使用柔和珊瑚橙，而不是默认蓝色
-    .card-footer {
-      :deep(.el-button--primary) {
-        background-color: $coral-orange;
-        border-color: $coral-orange;
-        color: #fff;
-
-        &.selected-btn {
-          background-color: $soft-green;
-          border-color: $soft-green;
-        }
-
-        &:hover {
-          filter: brightness(1.05);
-        }
-      }
-    }
+    background: #ffffff;
   }
 }
 
@@ -670,7 +657,7 @@ $border-soft: #f1e3d8; // 柔和边框
 
   h3 {
     margin: 0;
-    color: $warm-white;
+    color: #ffffff;
     font-size: 22px;
     font-weight: 600;
   }
@@ -680,7 +667,7 @@ $border-soft: #f1e3d8; // 柔和边框
   }
 
   .detail-btn {
-    color: white;
+    color: #ffffff;
     padding: 4px 12px;
     border-radius: 6px;
     transition: all 0.2s;
@@ -696,12 +683,11 @@ $border-soft: #f1e3d8; // 柔和边框
 }
 
 .selected-package {
-  border: 2px solid $soft-green;
-  box-shadow: 0 0 18px rgba(187, 212, 70, 0.35);
+  border: 3px solid $primary-color;
+  box-shadow: 0 0 20px rgba(64, 158, 255, 0.4);
 
   :deep(.el-card__header) {
-    // 选中状态使用略带绿色调的米色，保持柔和
-    background-color: lighten($soft-green, 32%);
+    background: linear-gradient(135deg, $primary-color 0%, $success-color 100%);
   }
 }
 
@@ -712,13 +698,13 @@ $border-soft: #f1e3d8; // 柔和边框
 .package-price {
   margin: 20px 0 24px;
   padding: 15px;
-  background-color: #fffaf5; // 柔和暖白，替代原来的渐变背景
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   border-radius: 8px;
 
   .price {
     font-size: 42px;
     font-weight: bold;
-    color: $coral-orange;
+    color: #e6a23c;
     display: block;
     margin-bottom: 5px;
   }
@@ -797,8 +783,8 @@ $border-soft: #f1e3d8; // 柔和边框
   }
 
   .selected-btn {
-    background: $soft-green;
-    border-color: $soft-green;
+    background: $success-color;
+    border-color: $success-color;
     color: #fff;
   }
 }
@@ -809,11 +795,11 @@ $border-soft: #f1e3d8; // 柔和边框
   gap: 20px;
   margin-top: 40px;
   padding: 30px 0;
-  background: rgba(250, 244, 228, 0.96);
+  background: #f5f7fa;
   border-radius: 12px;
   position: sticky;
   bottom: 20px;
-  box-shadow: 0 -4px 18px rgba(61, 44, 35, 0.12);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 
   :deep(.el-button) {
     min-width: 120px;
@@ -822,8 +808,8 @@ $border-soft: #f1e3d8; // 柔和边框
   }
 
   :deep(.el-button--primary) {
-    background-color: $coral-orange;
-    border-color: $coral-orange;
+    background-color: $primary-color;
+    border-color: $primary-color;
     color: #fff;
 
     &:hover {
@@ -835,19 +821,19 @@ $border-soft: #f1e3d8; // 柔和边框
 // 详情对话框样式
 :deep(.package-detail-dialog) {
   .el-dialog__header {
-    background: linear-gradient(135deg, rgba(250, 123, 83, 0.95) 0%, rgba(252, 215, 68, 0.95) 55%, rgba(187, 212, 70, 0.95) 100%);
-    color: $warm-white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
     padding: 20px 24px;
     border-radius: 8px 8px 0 0;
 
     .el-dialog__title {
-      color: $warm-white;
+      color: #ffffff;
       font-size: 24px;
       font-weight: 600;
     }
 
     .el-dialog__headerbtn .el-dialog__close {
-      color: $warm-white;
+      color: #ffffff;
       font-size: 20px;
     }
   }

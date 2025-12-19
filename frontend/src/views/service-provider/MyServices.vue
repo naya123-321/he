@@ -62,7 +62,11 @@
       >
         <el-table-column prop="orderNo" label="订单号" width="180" />
         <el-table-column prop="petName" label="宠物姓名" width="120" />
-        <el-table-column prop="petType" label="宠物类型" width="120" />
+        <el-table-column prop="petType" label="宠物类型" width="120">
+          <template #default="{ row }">
+            {{ getPetTypeLabel(row.petType) || row.petType }}
+          </template>
+        </el-table-column>
         <el-table-column prop="contactName" label="联系人" width="120" />
         <el-table-column prop="contactPhone" label="联系电话" width="150" />
         <el-table-column prop="appointmentTime" label="预约时间" width="180" />
@@ -127,6 +131,7 @@ import { Search, RefreshLeft } from "@element-plus/icons-vue";
 import { useOrderStore } from "@/store/order";
 import { orderApi } from "@/api/order";
 import { useUserStore } from "@/store/user";
+import { getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 const loading = ref(false);
@@ -347,37 +352,167 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色方案（与其他页面保持一致）
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-light: #909399;
+$border-color: #ebeef5;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+
 .my-services-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
-}
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: #ffffff;
 
-.services-intro {
-  margin-bottom: 30px;
+  :deep(.el-page-header) {
+    margin-bottom: 24px;
 
-  h2 {
-    color: #303133;
-    margin-bottom: 10px;
+    .el-page-header__content {
+      color: $text-primary;
+      font-weight: 700;
+      font-size: 18px;
+    }
   }
 
-  p {
-    color: #606266;
-    font-size: 16px;
+  .services-intro {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid $border-color;
+
+    h2 {
+      color: $text-primary;
+      margin-bottom: 12px;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    p {
+      color: $text-secondary;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0;
+    }
   }
-}
 
-.filter-card {
-  margin-bottom: 30px;
-}
+  .filter-card,
+  .services-card {
+    border-radius: 12px;
+    border: 1px solid $border-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
 
-.services-card {
-  margin-bottom: 30px;
-}
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
-.pagination {
-  margin-top: 20px;
-  text-align: right;
+    :deep(.el-card__body) {
+      padding: 24px;
+    }
+  }
+
+  .filter-card {
+    :deep(.el-form) {
+      .el-form-item {
+        margin-bottom: 16px;
+
+        .el-form-item__label {
+          color: $text-secondary;
+          font-weight: 500;
+        }
+      }
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select .el-input__wrapper),
+    :deep(.el-date-editor) {
+      border-radius: 8px;
+    }
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+
+      &.el-button--primary {
+        background-color: $primary-color;
+        border-color: $primary-color;
+      }
+    }
+  }
+
+  .services-card {
+    :deep(.el-table) {
+      border-radius: 8px;
+      overflow: hidden;
+
+      .el-table__header {
+        th {
+          background: $bg-light;
+          color: $text-primary;
+          font-weight: 600;
+          border-bottom: 2px solid $border-color;
+        }
+      }
+
+      .el-table__body {
+        tr {
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: rgba(64, 158, 255, 0.05);
+          }
+        }
+
+        td {
+          border-bottom: 1px solid $border-color;
+        }
+      }
+    }
+
+    :deep(.el-tag) {
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    :deep(.el-button) {
+      border-radius: 8px;
+      font-weight: 500;
+      margin-right: 8px;
+      margin-bottom: 4px;
+    }
+  }
+
+  .pagination {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    border-top: 1px solid $border-color;
+
+    :deep(.el-pagination) {
+      .el-pager li {
+        border-radius: 6px;
+        margin: 0 4px;
+
+        &.is-active {
+          background-color: $primary-color;
+          color: $bg-white;
+        }
+      }
+
+      .btn-prev,
+      .btn-next {
+        border-radius: 6px;
+      }
+    }
+  }
 }
 </style>
 
