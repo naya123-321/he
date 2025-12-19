@@ -329,26 +329,52 @@ public class RecommendationService {
             return vo;
         }
 
-        // 简单规则引擎：基于 petType/duration、age、deathCause 打分
+        // 简单规则引擎：基于 petType/duration、age、deathCause、budget、participants 打分
         Map<Long, Double> popularity = computePopularity();
         ServiceType best = null;
         double bestScore = -1;
-
+        Map<ServiceType, Double> allScores = new HashMap<>(); // 记录所有套餐的分数，用于调试
+        
         for (ServiceType s : enabled) {
-            double score = 0;
-            // 历史热度（0-50）
-            score += Math.min(50.0, popularity.getOrDefault(s.getId(), 0.0));
+            double popularityScore = Math.min(20.0, popularity.getOrDefault(s.getId(), 0.0)); // 进一步降低历史热度权重
+            double ruleScoreValue = ruleScore(dto, s);
+            double totalScore = popularityScore + ruleScoreValue;
+            
+            allScores.put(s, totalScore);
 
-            // 规则分（0-50）
-            score += ruleScore(dto, s);
-
-            if (score > bestScore) {
-                bestScore = score;
+            if (totalScore > bestScore) {
+                bestScore = totalScore;
                 best = s;
             }
         }
 
-        if (best == null) best = enabled.get(0);
+        // 如果所有套餐分数相同或非常接近，根据用户输入特征选择
+        if (best == null) {
+            best = enabled.get(0);
+        } else {
+            // 检查是否有多个套餐分数非常接近（差距小于3分）
+            List<ServiceType> closeCandidates = new ArrayList<>();
+            for (Map.Entry<ServiceType, Double> entry : allScores.entrySet()) {
+                if (Math.abs(entry.getValue() - bestScore) < 3.0) {
+                    closeCandidates.add(entry.getKey());
+                }
+            }
+            
+            if (closeCandidates.size() > 1 && dto != null) {
+                // 根据用户输入的多个特征计算哈希值，确保不同输入选择不同套餐
+                int hash = 0;
+                if (dto.getPetType() != null) hash += dto.getPetType().hashCode() * 31;
+                if (dto.getPetAge() != null) hash += dto.getPetAge() * 17;
+                if (dto.getDeathCause() != null) hash += dto.getDeathCause().hashCode() * 13;
+                if (dto.getBudgetMin() != null) hash += dto.getBudgetMin().intValue() * 7;
+                if (dto.getBudgetMax() != null) hash += dto.getBudgetMax().intValue() * 5;
+                if (dto.getParticipants() != null) hash += dto.getParticipants() * 3;
+                
+                int index = Math.abs(hash) % closeCandidates.size();
+                best = closeCandidates.get(index);
+                bestScore = allScores.get(best);
+            }
+        }
 
         vo.setRecommendedPackageId(best.getId());
         vo.setRecommendedPackageName(best.getName());
@@ -384,66 +410,157 @@ public class RecommendationService {
 
     private double ruleScore(PackageRecommendationRequestDTO dto, ServiceType s) {
         if (dto == null) return 10.0;
-        double score = 10.0;
+        double score = 0.0; // 从0开始，更清晰地计算各项得分
 
-        // petType -> duration 偏好
+        // 1. 预算匹配（最重要，权重最高：0-30分）
+        Double min = dto.getBudgetMin();
+        Double max = dto.getBudgetMax();
+        if (s.getPrice() != null) {
+            double price = s.getPrice();
+            // 未提供预算：中等分
+            if (min == null && max == null) {
+                score += 15;
+            } else {
+                double bmin = min == null ? 0.0 : min;
+                double bmax = max == null ? Double.POSITIVE_INFINITY : max;
+                if (min != null && max != null && bmax < bmin) {
+                    double tmp = bmin;
+                    bmin = bmax;
+                    bmax = tmp;
+                }
+
+                // 预算目标价：略偏向预算上限的中高档，避免“总选最便宜”
+                double target;
+                if (min != null && max != null && Double.isFinite(bmax)) {
+                    target = bmin + (bmax - bmin) * 0.7;
+                } else if (max != null && Double.isFinite(bmax)) {
+                    target = bmax * 0.85;
+                } else if (min != null) {
+                    target = bmin * 1.3;
+                } else {
+                    target = price;
+                }
+
+                // 预算分：允许在预算内更高分，明显偏离（尤其超预算）强扣分
+                double budgetScore;
+                if (max != null && Double.isFinite(bmax) && price > bmax) {
+                    double overRatio = (price - bmax) / Math.max(1.0, bmax);
+                    budgetScore = Math.max(-30.0, -30.0 * (0.6 + overRatio)); // 超预算：强惩罚
+                } else if (min != null && price < bmin) {
+                    double underRatio = (bmin - price) / Math.max(1.0, bmin);
+                    budgetScore = Math.max(-18.0, -18.0 * underRatio); // 低于预算下限：惩罚（避免总选最便宜）
+                } else {
+                    double scale;
+                    if (min != null && max != null && Double.isFinite(bmax)) {
+                        scale = Math.max(1.0, (bmax - bmin) * 0.7);
+                    } else if (max != null && Double.isFinite(bmax)) {
+                        scale = Math.max(1.0, bmax * 0.85);
+                    } else {
+                        scale = Math.max(1.0, bmin * 0.9);
+                    }
+                    double closeness = 1.0 - Math.min(1.0, Math.abs(price - target) / scale);
+                    budgetScore = 18.0 + 12.0 * closeness; // 18~30：预算内越贴近目标越高
+                }
+
+                score += budgetScore;
+            }
+        } else {
+            // 无价格信息：只能给中等分
+            score += 12;
+        }
+
+        // 2. 宠物类型 -> 服务时长匹配（0-20分）
         Integer duration = s.getDuration();
-        String petType = safe(dto.getPetType());
+        String petType = safe(dto.getPetType()).toLowerCase();
         if (duration != null) {
+            // 大型宠物（大型犬等）需要更长服务时长
             if (petType.contains("large") || petType.contains("大型")) {
-                if (duration >= 90) score += 18;
-            } else if (petType.contains("medium") || petType.contains("中型")) {
-                if (duration >= 75) score += 16;
-            } else if (petType.contains("small") || petType.contains("小型") || petType.contains("cat") || petType.contains("猫")) {
-                if (duration <= 75) score += 14;
+                if (duration >= 90) score += 20;
+                else if (duration >= 75) score += 12;
+                else score += 5;
+            } 
+            // 中型宠物（中型犬等）
+            else if (petType.contains("medium") || petType.contains("中型")) {
+                if (duration >= 75) score += 18;
+                else if (duration >= 60) score += 14;
+                else score += 6;
+            } 
+            // 小型宠物（猫、小型犬、仓鼠、兔子、鸟等）
+            else if (petType.contains("small") || petType.contains("小型") || 
+                     petType.equals("cat") || petType.contains("猫") ||
+                     petType.equals("hamster") || petType.contains("仓鼠") ||
+                     petType.equals("rabbit") || petType.contains("兔子") ||
+                     petType.equals("bird") || petType.contains("鸟") ||
+                     petType.equals("chinchilla") || petType.contains("龙猫") ||
+                     petType.equals("guinea-pig") || petType.equals("guinea-pig-2") ||
+                     petType.equals("hedgehog") || petType.contains("刺猬") ||
+                     petType.equals("ferret") || petType.contains("雪貂")) {
+                if (duration <= 75) score += 18;
+                else if (duration <= 90) score += 12;
+                else score += 5;
+            } 
+            // 其他类型（鱼类、爬行动物等）
+            else {
+                if (duration >= 60 && duration <= 90) score += 15;
+                else score += 8;
+            }
+        }
+
+        // 3. 宠物年龄 -> 服务完整度（0-15分）
+        Integer age = dto.getPetAge();
+        if (age != null && s.getPrice() != null) {
+            double median = medianPrice();
+            if (age >= 8) {
+                // 高龄宠物，建议更完整的服务
+                if (s.getPrice() >= median) score += 15;
+                else if (s.getPrice() >= median * 0.7) score += 10;
+                else score += 5;
+            } else if (age <= 2) {
+                // 幼年宠物，可以选择性价比高的
+                if (s.getPrice() <= median) score += 12;
+                else score += 6;
+            } else {
+                // 中年宠物，中等分数
+                score += 8;
+            }
+        }
+
+        // 4. 离世原因 -> 服务温馨度（0-15分）
+        String cause = safe(dto.getDeathCause()).toLowerCase();
+        if (s.getPrice() != null) {
+            double median = medianPrice();
+            if (cause.contains("disease") || cause.contains("疾病")) {
+                // 疾病离世，建议更温馨的服务
+                if (s.getPrice() >= median) score += 15;
+                else if (s.getPrice() >= median * 0.7) score += 10;
+                else score += 6;
+            } else if (cause.contains("accident") || cause.contains("意外")) {
+                score += 10;
+            } else if (cause.contains("aging") || cause.contains("衰老")) {
+                if (s.getPrice() >= median) score += 12;
+                else score += 8;
             } else {
                 score += 8;
             }
         }
 
-        // age -> 更倾向纪念册/更完整流程（用“价格/时长”粗略近似）
-        Integer age = dto.getPetAge();
-        if (age != null) {
-            if (age >= 8) {
-                if (s.getPrice() != null && s.getPrice() >= medianPrice()) score += 14;
-            } else if (age <= 2) {
-                if (s.getPrice() != null && s.getPrice() <= medianPrice()) score += 10;
-            } else {
-                score += 6;
-            }
-        }
-
-        // deathCause -> 疾病更温馨（偏中高端）
-        String cause = safe(dto.getDeathCause());
-        if (cause.contains("disease") || cause.contains("疾病")) {
-            if (s.getPrice() != null && s.getPrice() >= medianPrice()) score += 12;
-        } else if (cause.contains("accident") || cause.contains("意外")) {
-            score += 8;
-        } else {
-            score += 6;
-        }
-
-        // budget -> 预算适配
-        Double min = dto.getBudgetMin();
-        Double max = dto.getBudgetMax();
-        if (s.getPrice() != null && (min != null || max != null)) {
-            if (min != null && s.getPrice() < min) {
-                score -= 8;
-            } else if (max != null && s.getPrice() > max) {
-                score -= 12;
-            } else {
-                score += 10;
-            }
-        }
-
-        // participants -> 参与人数较多倾向更长服务时长/更完整流程
+        // 5. 参与人数 -> 服务时长需求（0-10分）
         Integer participants = dto.getParticipants();
-        if (participants != null && participants >= 4) {
-            if (s.getDuration() != null && s.getDuration() >= 90) score += 10;
-            else if (s.getDuration() != null && s.getDuration() >= 75) score += 6;
+        if (participants != null && s.getDuration() != null) {
+            if (participants >= 4) {
+                // 参与人数多，需要更长服务时长
+                if (s.getDuration() >= 90) score += 10;
+                else if (s.getDuration() >= 75) score += 7;
+                else score += 3;
+            } else if (participants >= 2) {
+                if (s.getDuration() >= 60) score += 8;
+                else score += 5;
+            } else {
+                score += 5;
+            }
         }
 
-        return Math.min(50.0, score);
+        return Math.max(0.0, Math.min(80.0, score)); // 规则分最高80分
     }
 
     private double medianPrice() {
@@ -527,13 +644,26 @@ public class RecommendationService {
 
     private String petTypeText(String v) {
         if (v == null) return "未知";
-        String s = v.toLowerCase();
-        if (s.contains("cat") || s.contains("猫")) return "猫";
+        String s = v.toLowerCase().trim();
+        // 精确匹配常见宠物类型
+        if (s.equals("cat") || s.contains("猫")) return "猫";
+        if (s.equals("dog") || s.contains("狗")) return "狗";
+        if (s.equals("rabbit") || s.contains("兔子")) return "兔子";
+        if (s.equals("hamster") || s.contains("仓鼠")) return "仓鼠";
+        if (s.equals("bird") || s.contains("鸟")) return "鸟";
+        if (s.equals("chinchilla") || s.contains("龙猫")) return "龙猫";
+        if (s.equals("guinea-pig") || s.equals("guinea-pig-2") || s.contains("豚鼠") || s.contains("荷兰猪")) return "豚鼠";
+        if (s.equals("hedgehog") || s.contains("刺猬")) return "刺猬";
+        if (s.equals("ferret") || s.contains("雪貂")) return "雪貂";
+        if (s.equals("reptile") || s.contains("爬行动物")) return "爬行动物";
+        if (s.equals("fish") || s.contains("鱼类")) return "鱼类";
+        // 模糊匹配（兼容旧数据）
         if (s.contains("dog_large") || s.contains("大型")) return "大型犬";
         if (s.contains("dog_medium") || s.contains("中型")) return "中型犬";
         if (s.contains("dog_small") || s.contains("小型")) return "小型犬";
-        if (s.contains("dog")) return "犬";
-        return "其他";
+        if (s.equals("other") || s.contains("其他")) return "其他";
+        // 默认返回原始值（如果前端有映射，会进一步转换）
+        return v;
     }
 
     private String deathCauseText(String v) {

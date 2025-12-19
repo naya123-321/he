@@ -44,7 +44,7 @@
         <div class="smart-section" v-if="recommendation?.analysis?.length">
           <div class="sec-title">📊 匹配分析：</div>
           <ul class="sec-list">
-            <li v-for="(it, idx) in recommendation.analysis" :key="idx">• {{ it }}</li>
+            <li v-for="(it, idx) in recommendation.analysis" :key="idx">• {{ formatAnalysisItem(it) }}</li>
           </ul>
         </div>
 
@@ -224,6 +224,7 @@ import { ElMessage, ElEmpty, ElDialog } from "element-plus";
 import { Check, View, MoreFilled } from "@element-plus/icons-vue";
 import { serviceTypeApi, type ServiceTypeVO } from "@/api/order";
 import { recommendationApi, type VisitorPetProfile, type PackageRecommendationResult } from "@/api/recommendation";
+import { getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 const route = useRoute();
@@ -406,6 +407,21 @@ const reloadRecommendation = async () => {
       ElMessage.success(`已为您标记智能推荐：${pkg.name}`);
     }
   }
+};
+
+// 格式化分析项，将英文宠物类型转换为中文
+const formatAnalysisItem = (item: string): string => {
+  if (!item) return item;
+  // 匹配 "宠物类型：xxx → ..." 格式
+  const petTypeMatch = item.match(/宠物类型[：:]\s*([^→]+)\s*→/);
+  if (petTypeMatch && petTypeMatch[1]) {
+    const petTypeValue = petTypeMatch[1].trim();
+    const chineseLabel = getPetTypeLabel(petTypeValue);
+    if (chineseLabel && chineseLabel !== petTypeValue) {
+      return item.replace(petTypeValue, chineseLabel);
+    }
+  }
+  return item;
 };
 
 // 加载服务套餐列表

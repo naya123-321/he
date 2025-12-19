@@ -285,12 +285,50 @@ def _rule_score(target: Profile, st: Dict[str, Any]) -> float:
 
     # 预算匹配（尽量不超预算）
     if price is not None and (target.budgetMin is not None or target.budgetMax is not None):
-        if target.budgetMin is not None and price < float(target.budgetMin):
-            score -= 0.10
-        elif target.budgetMax is not None and price > float(target.budgetMax):
-            score -= 0.18
+        bmin = target.budgetMin
+        bmax = target.budgetMax
+        # 兼容错误输入：max < min
+        if bmin is not None and bmax is not None and bmax < bmin:
+            bmin, bmax = bmax, bmin
+
+        # 目标价：偏向预算上限的“中高档”，避免预算越高越选最便宜
+        if bmin is not None and bmax is not None:
+            span = max(1.0, float(bmax) - float(bmin))
+            target_price = float(bmin) + 0.70 * span
+            # 超预算强惩罚；低于预算下限按距离惩罚；预算内按贴近目标加分
+            if price > float(bmax):
+                over_ratio = (price - float(bmax)) / max(1.0, float(bmax))
+                score -= min(0.55, 0.30 + 0.60 * over_ratio)
+            elif price < float(bmin):
+                under_ratio = (float(bmin) - price) / max(1.0, float(bmin))
+                score -= min(0.35, 0.10 + 0.35 * under_ratio)
+            else:
+                dist = abs(price - target_price)
+                scale = max(1.0, 0.70 * span)
+                closeness = max(0.0, 1.0 - min(1.0, dist / scale))
+                score += 0.10 + 0.18 * closeness
+        elif bmax is not None:
+            # 只有上限：预算内更偏向靠近上限的方案
+            if price > float(bmax):
+                over_ratio = (price - float(bmax)) / max(1.0, float(bmax))
+                score -= min(0.55, 0.28 + 0.60 * over_ratio)
+            else:
+                target_price = 0.85 * float(bmax)
+                dist = abs(price - target_price)
+                scale = max(1.0, 0.85 * float(bmax))
+                closeness = max(0.0, 1.0 - min(1.0, dist / scale))
+                score += 0.08 + 0.20 * closeness
         else:
-            score += 0.12
+            # 只有下限：希望不低于下限，略偏向下限上方的方案
+            if price < float(bmin):
+                under_ratio = (float(bmin) - price) / max(1.0, float(bmin))
+                score -= min(0.35, 0.08 + 0.35 * under_ratio)
+            else:
+                target_price = 1.30 * float(bmin)
+                dist = abs(price - target_price)
+                scale = max(1.0, 0.90 * float(bmin))
+                closeness = max(0.0, 1.0 - min(1.0, dist / scale))
+                score += 0.08 + 0.18 * closeness
 
     # 人数匹配：人数多更偏向更长时长
     if target.participants is not None and int(target.participants) >= 4:
@@ -373,10 +411,28 @@ def recommend(req: RecommendRequest) -> RecommendResponse:
 
     best_id = None
     best_score = -1.0
+    has_budget = profile.budgetMin is not None or profile.budgetMax is not None
+
+    # 协同过滤“可信度”：相似用户数量、以及相似用户产生的历史交互总量越高，CF 越可信
+    # 数据稀疏时（例如只有 1 个相似用户），应主要依赖规则引擎（尤其预算是强偏好）
+    cf_confidence = min(1.0, (similar_users_count / 8.0)) * min(1.0, (total / 20.0))
+    base_cf_weight = 0.35 if has_budget else 0.70
+    cf_weight = base_cf_weight * cf_confidence
+    rule_weight = 1.0 - cf_weight
+
     for sid in candidates:
         cf = (freq.get(sid, 0) / total) if total > 0 else 0.0  # 0~1
         rule = _rule_score(profile, st_by_id[sid])  # 0~1
-        final = 0.7 * cf + 0.3 * rule
+        price = st_by_id[sid].get("price")
+        try:
+            price = float(price) if price is not None else None
+        except Exception:
+            price = None
+
+        final = cf_weight * cf + rule_weight * rule
+        if has_budget and price is not None and profile.budgetMax is not None and price > float(profile.budgetMax):
+            # 超预算：直接大幅降低，让“再热门也别推荐超预算”
+            final -= 0.60
         if final > best_score:
             best_score = final
             best_id = sid
@@ -403,14 +459,14 @@ def recommend(req: RecommendRequest) -> RecommendResponse:
     warning = ""
     if similar_users_count == 0:
         warning = "相似用户不足，已更多依赖规则引擎"
+    elif cf_confidence < 0.15:
+        warning = "相似用户样本较少，已更多依赖规则引擎（预算与偏好优先）"
 
     return RecommendResponse(
         recommendedServiceTypeId=best_id,
         score=score_pct,
         similarUsers=similar_users_count,
         analysis=analysis,
-        algorithm=algo,
+        algorithm=f"{algo}（CF权重{int(round(cf_weight * 100))}%，规则权重{int(round(rule_weight * 100))}%）",
         warning=warning,
     )
-
-

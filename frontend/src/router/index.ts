@@ -51,6 +51,7 @@ const routes = [
         path: "service-packages",
         name: "ServicePackages",
         component: () => import("@/views/pet-owner/ServicePackages.vue"),
+        meta: { requiresAuth: false }, // 服务套餐页面允许未登录访问（访客可查看）
       },
       {
         path: "book-service",
@@ -246,6 +247,14 @@ const routes = [
     ],
   },
 
+  // 访客路由（无需登录）
+  {
+    path: "/visitor/pet-info",
+    name: "PetInfoCollect",
+    component: () => import("@/views/visitor/PetInfoCollect.vue"),
+    meta: { requiresAuth: false },
+  },
+
   // 其他路由...
 ];
 
@@ -259,8 +268,10 @@ router.beforeEach((to: any, from: any, next: any) => {
   console.log("路由守卫触发:", { from: from.path, to: to.path });
   // 使用sessionStorage，让每个标签页独立存储
   const token = sessionStorage.getItem("token");
-  const requiresAuth = to.meta.requiresAuth;
-  const requiredRole = to.meta.requiredRole;
+  
+  // 获取路由的 meta，优先使用当前路由的 meta，如果没有则使用父路由的
+  const requiresAuth = to.meta.requiresAuth !== undefined ? to.meta.requiresAuth : (to.matched[to.matched.length - 1]?.meta?.requiresAuth ?? true);
+  const requiredRole = to.meta.requiredRole !== undefined ? to.meta.requiredRole : (to.matched[to.matched.length - 1]?.meta?.requiredRole);
 
   // 从session存储获取用户信息
   const userInfoStr = sessionStorage.getItem("userInfo");

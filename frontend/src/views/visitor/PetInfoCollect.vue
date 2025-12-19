@@ -128,7 +128,7 @@ const submit = async () => {
 
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...form }));
     ElMessage.success("已保存宠物信息，即将为您推荐套餐");
-    router.push({ path: "/service-packages", query: { recommend: "1" } });
+    router.push({ path: "/pet-owner/service-packages", query: { recommend: "1" } });
   } catch (e: any) {
     ElMessage.error(e?.message || "提交失败");
   } finally {
