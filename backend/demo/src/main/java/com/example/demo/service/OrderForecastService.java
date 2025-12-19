@@ -5,6 +5,8 @@ import com.example.demo.entity.Order;
 import com.example.demo.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -31,6 +33,9 @@ public class OrderForecastService {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired(required = false)
+    private CacheManager cacheManager;
+
     @Value("${spring.datasource.url}")
     private String jdbcUrl;
 
@@ -54,6 +59,16 @@ public class OrderForecastService {
         int h = (historyDays == null || historyDays <= 0) ? defaultHistoryDays : historyDays;
         boolean f = force != null && force;
 
+        String cacheKey = "days=" + d + "|historyDays=" + h;
+        if (f) {
+            evictCache("orderForecast", cacheKey);
+        } else {
+            Map<String, Object> cached = getCacheMap("orderForecast", cacheKey);
+            if (cached != null) {
+                return cached;
+            }
+        }
+
         Path baseDir = resolveBaseDir();
         Path outDir = baseDir.resolve("data");
         Path outFile = outDir.resolve("order_forecast.json");
@@ -73,17 +88,60 @@ public class OrderForecastService {
         // 运行 Python 生成 JSON，失败则尝试返回旧文件
         try {
             runPythonForecast(baseDir, outFile, d, h);
-            return readJson(outFile);
+            Map<String, Object> result = readJson(outFile);
+            putCache("orderForecast", cacheKey, result);
+            return result;
         } catch (Exception e) {
             try {
                 if (Files.exists(outFile)) {
                     Map<String, Object> cached = readJson(outFile);
                     cached.put("warning", "预测脚本执行失败，返回缓存结果: " + e.getMessage());
+                    putCache("orderForecast", cacheKey, cached);
                     return cached;
                 }
             } catch (Exception ignored) {}
             // 无缓存：降级为数据库简单预测，保证页面不报错
-            return buildFallbackForecast(d, h, "Python依赖缺失或执行失败，已降级为简单预测：" + e.getMessage());
+            Map<String, Object> fallback = buildFallbackForecast(d, h, "Python依赖缺失或执行失败，已降级为简单预测：" + e.getMessage());
+            putCache("orderForecast", cacheKey, fallback);
+            return fallback;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> getCacheMap(String cacheName, String key) {
+        try {
+            if (cacheManager == null) return null;
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache == null) return null;
+            Object v = cache.get(key, Object.class);
+            if (v instanceof Map) {
+                return (Map<String, Object>) v;
+            }
+            return null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void putCache(String cacheName, String key, Object value) {
+        try {
+            if (cacheManager == null) return;
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache == null) return;
+            cache.put(key, value);
+        } catch (Exception ignored) {
+            // ignore
+        }
+    }
+
+    private void evictCache(String cacheName, String key) {
+        try {
+            if (cacheManager == null) return;
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache == null) return;
+            cache.evict(key);
+        } catch (Exception ignored) {
+            // ignore
         }
     }
 
@@ -340,5 +398,4 @@ public class OrderForecastService {
         return out;
     }
 }
-
 
