@@ -456,11 +456,52 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色变量
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$info-color: #909399;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-placeholder: #909399;
+$border-color: #dcdfe6;
+$border-color-light: #ebeef5;
+
 .order-list-container {
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: $bg-light;
 
   .filter-card {
     margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+
+    :deep(.el-card__body) {
+      padding: 20px;
+    }
+
+    .el-form-item {
+      margin-bottom: 0;
+    }
+
+    .el-input,
+    .el-select,
+    .el-date-picker {
+      border-radius: 8px;
+    }
+
+    .el-button {
+      border-radius: 8px;
+      font-weight: 500;
+    }
   }
 
   .stats-panel {
@@ -469,62 +510,168 @@ onMounted(() => {
     .stat-card {
       cursor: pointer;
       transition: all 0.3s;
+      border-radius: 12px;
+      border: 1px solid $border-color-light;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
 
       &:hover {
         transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
 
       .stat-content {
         text-align: center;
-        padding: 15px 0;
+        padding: 20px 15px;
 
         .stat-number {
-          font-size: 24px;
-          font-weight: bold;
-          margin-bottom: 5px;
+          font-size: 28px;
+          font-weight: 700;
+          margin-bottom: 8px;
         }
 
         .stat-label {
-          color: #666;
+          color: $text-secondary;
+          font-size: 14px;
+          font-weight: 500;
         }
       }
 
       &.stat-all {
-        border-left: 4px solid #409eff;
+        border-left: 4px solid $primary-color;
         .stat-number {
-          color: #409eff;
+          color: $primary-color;
         }
       }
       &.stat-pending {
-        border-left: 4px solid #e6a23c;
+        border-left: 4px solid $warning-color;
         .stat-number {
-          color: #e6a23c;
+          color: $warning-color;
         }
       }
       &.stat-processing {
-        border-left: 4px solid #409eff;
+        border-left: 4px solid $primary-color;
         .stat-number {
-          color: #409eff;
+          color: $primary-color;
         }
       }
       &.stat-completed {
-        border-left: 4px solid #67c23a;
+        border-left: 4px solid $success-color;
         .stat-number {
-          color: #67c23a;
+          color: $success-color;
         }
       }
       &.stat-cancelled {
-        border-left: 4px solid #f56c6c;
+        border-left: 4px solid $danger-color;
         .stat-number {
-          color: #f56c6c;
+          color: $danger-color;
         }
       }
     }
   }
 
+  :deep(.el-card) {
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+  }
+
+  :deep(.el-table) {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .el-table__header {
+      th {
+        background-color: $bg-light;
+        font-weight: 600;
+        color: $text-primary;
+      }
+    }
+
+    .el-table__body {
+      tr {
+        &:hover {
+          background-color: rgba(64, 158, 255, 0.05);
+        }
+      }
+    }
+  }
+
+  :deep(.el-tag) {
+    border-radius: 20px;
+    padding: 0 12px;
+    font-weight: 500;
+  }
+
+  :deep(.el-button) {
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
   .pagination-wrapper {
-    margin-top: 15px;
-    text-align: right;
+    margin-top: 20px;
+    padding: 20px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    justify-content: center;
+
+    :deep(.el-pagination) {
+      .el-pager li.is-active {
+        background: $primary-color;
+        color: #fff;
+        border-radius: 4px;
+      }
+    }
+  }
+
+  :deep(.el-dialog) {
+    border-radius: 12px;
+
+    .el-dialog__header {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #fff;
+      padding: 20px 24px;
+      border-radius: 12px 12px 0 0;
+
+      .el-dialog__title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .el-dialog__headerbtn {
+        .el-dialog__close {
+          color: #fff;
+          font-size: 20px;
+
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+      }
+    }
+
+    .el-dialog__body {
+      padding: 24px;
+    }
+
+    .el-form-item__label {
+      color: $text-primary;
+      font-weight: 500;
+    }
+
+    .el-input,
+    .el-textarea {
+      border-radius: 8px;
+    }
+
+    .el-rate {
+      font-size: 24px;
+    }
   }
 }
 </style>

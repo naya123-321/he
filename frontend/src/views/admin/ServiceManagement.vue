@@ -16,12 +16,13 @@
       </div>
 
       <!-- 服务类型列表 -->
-      <el-table 
-        :data="serviceList" 
-        v-loading="loading"
-        style="width: 100%"
-        stripe
-      >
+      <el-card shadow="never" style="border-radius: 12px; border: 1px solid #ebeef5; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">
+        <el-table 
+          :data="serviceList" 
+          v-loading="loading"
+          style="width: 100%"
+          stripe
+        >
         <el-table-column prop="name" label="服务名称" width="200" />
         <el-table-column prop="description" label="服务描述" min-width="300" show-overflow-tooltip />
         <el-table-column label="价格" width="120" align="right">
@@ -70,10 +71,11 @@
             </el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
 
-      <!-- 空状态 -->
-      <el-empty v-if="!loading && serviceList.length === 0" description="暂无服务类型数据" />
+        <!-- 空状态 -->
+        <el-empty v-if="!loading && serviceList.length === 0" description="暂无服务类型数据" />
+      </el-card>
     </div>
 
     <!-- 新增/编辑对话框 -->
@@ -392,8 +394,26 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色变量
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$info-color: #909399;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-placeholder: #909399;
+$border-color: #dcdfe6;
+$border-color-light: #ebeef5;
+
 .service-management-container {
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: $bg-light;
   
   .content-wrapper {
     margin-top: 20px;
@@ -402,22 +422,96 @@ onMounted(() => {
   .action-bar {
     margin-bottom: 20px;
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    padding: 20px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    .el-button {
+      border-radius: 8px;
+      font-weight: 500;
+    }
   }
   
   .price-text {
     font-weight: bold;
-    color: #f56c6c;
+    color: $danger-color;
     font-size: 16px;
   }
   
   :deep(.el-table) {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
     .el-table__header {
       th {
-        background-color: #f5f7fa;
+        background-color: $bg-light;
         font-weight: 600;
+        color: $text-primary;
       }
     }
+
+    .el-table__body {
+      tr {
+        &:hover {
+          background-color: rgba(64, 158, 255, 0.05);
+        }
+      }
+    }
+  }
+
+  :deep(.el-dialog) {
+    border-radius: 12px;
+
+    .el-dialog__header {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #fff;
+      padding: 20px 24px;
+      border-radius: 12px 12px 0 0;
+
+      .el-dialog__title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .el-dialog__headerbtn {
+        .el-dialog__close {
+          color: #fff;
+          font-size: 20px;
+
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+      }
+    }
+
+    .el-dialog__body {
+      padding: 24px;
+    }
+
+    .el-form-item__label {
+      color: $text-primary;
+      font-weight: 500;
+    }
+
+    .el-input,
+    .el-textarea,
+    .el-input-number,
+    .el-select {
+      border-radius: 8px;
+    }
+  }
+
+  :deep(.el-tag) {
+    border-radius: 20px;
+    padding: 0 12px;
+    font-weight: 500;
   }
 }
 </style>

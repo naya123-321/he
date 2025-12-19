@@ -341,55 +341,93 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色变量
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$info-color: #909399;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-placeholder: #909399;
+$border-color: #dcdfe6;
+$border-color-light: #ebeef5;
+
 .satisfaction-stats-container {
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: $bg-light;
   
   .content-wrapper {
     margin-top: 20px;
   }
   
   .stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: $bg-white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-color: $primary-color;
+    }
     
     .stat-title {
       font-size: 14px;
-      color: #606266;
-      margin-bottom: 12px;
+      color: $text-secondary;
+      margin-bottom: 16px;
+      font-weight: 500;
     }
     
     .stat-value {
-      font-size: 32px;
-      font-weight: bold;
-      color: #303133;
+      font-size: 36px;
+      font-weight: 700;
+      color: $text-primary;
       
       .stat-unit {
-        font-size: 16px;
+        font-size: 18px;
         margin-left: 4px;
-        color: #909399;
+        color: $text-placeholder;
+        font-weight: 500;
       }
     }
   }
   
   .chart-container {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: $bg-white;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-top: 30px;
     
     .chart-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid $border-color-light;
       
       h3 {
         margin: 0;
-        font-size: 18px;
-        color: #303133;
+        font-size: 20px;
+        font-weight: 700;
+        color: $text-primary;
+      }
+
+      .el-select {
+        border-radius: 8px;
       }
     }
   }

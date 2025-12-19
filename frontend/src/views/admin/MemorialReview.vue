@@ -225,55 +225,205 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色变量
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$info-color: #909399;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-placeholder: #909399;
+$border-color: #dcdfe6;
+$border-color-light: #ebeef5;
+
 .memorial-review-container {
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: $bg-light;
   
   .content-wrapper {
     margin-top: 20px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  :deep(.el-tabs) {
+    .el-tabs__header {
+      margin-bottom: 20px;
+    }
+
+    .el-tabs__item {
+      font-size: 16px;
+      font-weight: 500;
+      padding: 0 24px;
+      height: 48px;
+      line-height: 48px;
+
+      &.is-active {
+        color: $primary-color;
+        font-weight: 600;
+      }
+    }
+
+    .el-tabs__active-bar {
+      height: 3px;
+      background: $primary-color;
+    }
+  }
+
+  :deep(.el-table) {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .el-table__header {
+      th {
+        background-color: $bg-light;
+        font-weight: 600;
+        color: $text-primary;
+      }
+    }
+
+    .el-table__body {
+      tr {
+        &:hover {
+          background-color: rgba(64, 158, 255, 0.05);
+        }
+      }
+    }
+  }
+
+  :deep(.el-button) {
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  :deep(.el-tag) {
+    border-radius: 20px;
+    padding: 0 12px;
+    font-weight: 500;
   }
 
   .detail-header {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid $border-color-light;
+    margin-bottom: 20px;
   }
+
   .d-title {
-    font-weight: 800;
-    font-size: 18px;
-    color: #303133;
+    font-weight: 700;
+    font-size: 20px;
+    color: $text-primary;
   }
+
   .d-sub {
-    color: #909399;
-    font-size: 13px;
+    color: $text-secondary;
+    font-size: 14px;
   }
+
   .d-meta {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
   }
+
   .images {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .el-image {
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+
+      &:hover {
+        transform: scale(1.02);
+      }
+    }
   }
+
   .pdf {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
+    padding: 16px;
+    background: $bg-light;
+    border-radius: 8px;
+    border-left: 4px solid $primary-color;
   }
+
   .note {
-    margin-top: 12px;
-    padding: 10px;
-    border-radius: 10px;
-    background: #f5f7fa;
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+    border-left: 4px solid $primary-color;
+
     .note-title {
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      color: $text-primary;
     }
+
     .note-body {
-      color: #606266;
+      color: $text-secondary;
       white-space: pre-wrap;
+      line-height: 1.6;
+    }
+  }
+
+  :deep(.el-dialog) {
+    border-radius: 12px;
+
+    .el-dialog__header {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #fff;
+      padding: 20px 24px;
+      border-radius: 12px 12px 0 0;
+
+      .el-dialog__title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .el-dialog__headerbtn {
+        .el-dialog__close {
+          color: #fff;
+          font-size: 20px;
+
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+      }
+    }
+
+    .el-dialog__body {
+      padding: 24px;
+    }
+
+    .el-form-item__label {
+      color: $text-primary;
+      font-weight: 500;
+    }
+
+    .el-input,
+    .el-textarea {
+      border-radius: 8px;
     }
   }
 }

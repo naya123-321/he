@@ -315,52 +315,156 @@ loadResources();
 </script>
 
 <style scoped lang="scss">
+// 统一配色变量
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$info-color: #909399;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-placeholder: #909399;
+$border-color: #dcdfe6;
+$border-color-light: #ebeef5;
+
 .grief-resource-management-container {
-  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: $bg-light;
 
   .content-wrapper {
     margin-top: 20px;
   }
 
   .action-bar {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    padding: 20px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+    .el-button {
+      border-radius: 8px;
+      font-weight: 500;
+    }
   }
 
   .filter-card {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+
+    :deep(.el-card__body) {
+      padding: 20px;
+    }
+
+    .el-input,
+    .el-select {
+      border-radius: 8px;
+    }
+
+    .el-button {
+      border-radius: 8px;
+      font-weight: 500;
+    }
+  }
+
+  :deep(.el-card) {
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+  }
+
+  :deep(.el-table) {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .el-table__header {
+      th {
+        background-color: $bg-light;
+        font-weight: 600;
+        color: $text-primary;
+      }
+    }
+
+    .el-table__body {
+      tr {
+        &:hover {
+          background-color: rgba(64, 158, 255, 0.05);
+        }
+      }
+    }
+  }
+
+  :deep(.el-button) {
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  :deep(.el-tag) {
+    border-radius: 20px;
+    padding: 0 12px;
+    font-weight: 500;
   }
 
   .pager {
-    margin-top: 16px;
+    margin-top: 20px;
+    padding: 20px;
+    background: $bg-white;
+    border-radius: 12px;
+    border: 1px solid $border-color-light;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+
+    :deep(.el-pagination) {
+      .el-pager li.is-active {
+        background: $primary-color;
+        color: #fff;
+        border-radius: 4px;
+      }
+    }
   }
 
   .detail {
     .detail-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
-      color: #303133;
-      margin-bottom: 10px;
+      color: $text-primary;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid $border-color-light;
     }
 
     .detail-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      color: #909399;
-      font-size: 12px;
-      margin-bottom: 12px;
+      gap: 16px;
+      color: $text-placeholder;
+      font-size: 13px;
+      margin-bottom: 20px;
+      padding: 12px;
+      background: $bg-light;
+      border-radius: 8px;
     }
 
     .detail-cover {
       width: 100%;
       max-height: 420px;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
       img {
         width: 100%;
@@ -370,18 +474,22 @@ loadResources();
     }
 
     .detail-block {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+
       .label {
-        font-size: 12px;
-        color: #909399;
-        margin-bottom: 6px;
+        font-size: 14px;
+        color: $text-secondary;
+        margin-bottom: 8px;
+        font-weight: 600;
       }
+
       .value {
-        padding: 12px;
-        background: #f5f7fa;
+        padding: 16px;
+        background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+        border-left: 4px solid $primary-color;
         border-radius: 8px;
-        color: #303133;
-        line-height: 1.7;
+        color: $text-primary;
+        line-height: 1.8;
         word-break: break-word;
       }
     }
@@ -403,8 +511,51 @@ loadResources();
 
   .form-tip {
     margin-top: 6px;
-    color: #909399;
+    color: $text-placeholder;
     font-size: 12px;
+  }
+
+  :deep(.el-dialog) {
+    border-radius: 12px;
+
+    .el-dialog__header {
+      background: linear-gradient(135deg, #409eff, #66b1ff);
+      color: #fff;
+      padding: 20px 24px;
+      border-radius: 12px 12px 0 0;
+
+      .el-dialog__title {
+        color: #fff;
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .el-dialog__headerbtn {
+        .el-dialog__close {
+          color: #fff;
+          font-size: 20px;
+
+          &:hover {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+      }
+    }
+
+    .el-dialog__body {
+      padding: 24px;
+    }
+
+    .el-form-item__label {
+      color: $text-primary;
+      font-weight: 500;
+    }
+
+    .el-input,
+    .el-textarea,
+    .el-select {
+      border-radius: 8px;
+    }
   }
 }
 </style>

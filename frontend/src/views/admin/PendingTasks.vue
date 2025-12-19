@@ -88,6 +88,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { orderApi } from "@/api/order";
 import { memorialApi } from "@/api/memorial";
+import { getPetTypeLabel } from "@/constants/petTypes";
 
 const router = useRouter();
 
@@ -127,7 +128,7 @@ const loadTasks = async () => {
           id: order.id,
           type: "order",
           title: "新订单待处理",
-          description: `订单号：${order.orderNo}，宠物：${order.petName}（${order.petType}）`,
+          description: `订单号：${order.orderNo}，宠物：${order.petName}（${getPetTypeLabel(order.petType) || order.petType}）`,
           createTime: order.createTime,
           orderId: order.id,
         }))
@@ -149,7 +150,7 @@ const loadTasks = async () => {
           id: memorial.id,
           type: "memorial",
           title: "纪念册审核",
-          description: `纪念册标题：${memorial.title}，宠物：${memorial.petName}（${memorial.petType}）`,
+          description: `纪念册标题：${memorial.title}，宠物：${memorial.petName}（${getPetTypeLabel(memorial.petType) || memorial.petType}）`,
           createTime: memorial.createTime,
           memorialId: memorial.id,
         }))
@@ -215,32 +216,78 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+// 统一配色变量
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$info-color: #909399;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-placeholder: #909399;
+$border-color: #dcdfe6;
+$border-color-light: #ebeef5;
+
 .pending-tasks-container {
-  padding: 20px;
-  background-color: #f5f7fa;
-  min-height: calc(100vh - 60px);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  background: $bg-light;
+  min-height: calc(100vh - 100px);
 }
 
 .tasks-intro {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid $border-color-light;
 
   h2 {
-    color: #303133;
+    color: $text-primary;
+    font-size: 28px;
+    font-weight: 700;
     margin-bottom: 10px;
   }
 
   p {
-    color: #606266;
-    font-size: 14px;
+    color: $text-secondary;
+    font-size: 16px;
   }
 }
 
 .filter-card {
   margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid $border-color-light;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
+
+  .el-input,
+  .el-select {
+    border-radius: 8px;
+  }
+
+  .el-button {
+    border-radius: 8px;
+    font-weight: 500;
+  }
 }
 
 .tasks-card {
   min-height: 400px;
+  border-radius: 12px;
+  border: 1px solid $border-color-light;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+
+  :deep(.el-card__body) {
+    padding: 24px;
+  }
 }
 
 .loading-container {
@@ -253,16 +300,48 @@ onMounted(() => {
 }
 
 .tasks-list {
-  padding: 20px 0;
+  padding: 10px 0;
+
+  :deep(.el-timeline) {
+    .el-timeline-item {
+      padding-bottom: 24px;
+
+      .el-timeline-item__timestamp {
+        color: $text-secondary;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .el-timeline-item__node {
+        width: 14px;
+        height: 14px;
+        border-width: 3px;
+      }
+
+      .el-timeline-item__tail {
+        border-left: 2px solid $border-color-light;
+      }
+    }
+  }
 }
 
 .task-card {
-  margin-bottom: 10px;
+  margin-bottom: 0;
+  border-radius: 12px;
+  border: 1px solid $border-color-light;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
+  background: $bg-white;
 
   &:hover {
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateX(8px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border-color: $primary-color;
+  }
+
+  :deep(.el-card__body) {
+    padding: 20px;
   }
 }
 
@@ -270,7 +349,9 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid $border-color-light;
 }
 
 .task-title-wrapper {
@@ -282,33 +363,52 @@ onMounted(() => {
 
 .task-title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
+  font-size: 18px;
+  font-weight: 700;
+  color: $text-primary;
 }
 
 .task-actions {
   display: flex;
   gap: 10px;
+
+  .el-button {
+    border-radius: 8px;
+    font-weight: 500;
+  }
 }
 
 .task-description {
-  color: #606266;
+  color: $text-secondary;
   font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 12px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+  border-left: 4px solid $primary-color;
+  border-radius: 8px;
 }
 
 .task-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
-  color: #909399;
+  font-size: 13px;
+  color: $text-placeholder;
+  padding-top: 12px;
+  border-top: 1px dashed $border-color-light;
 }
 
 .task-time {
-  color: #909399;
+  color: $text-placeholder;
+  font-weight: 500;
+}
+
+:deep(.el-tag) {
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-weight: 500;
+  font-size: 13px;
 }
 </style>
 

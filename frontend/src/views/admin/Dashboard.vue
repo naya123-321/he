@@ -1197,22 +1197,42 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
 </script>
 
 <style scoped lang="scss">
+// 统一配色变量
+$primary-color: #409eff;
+$success-color: #67c23a;
+$warning-color: #e6a23c;
+$danger-color: #f56c6c;
+$info-color: #909399;
+$bg-light: #f5f7fa;
+$bg-white: #ffffff;
+$text-primary: #303133;
+$text-secondary: #606266;
+$text-placeholder: #909399;
+$border-color: #dcdfe6;
+$border-color-light: #ebeef5;
+
 .dashboard-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px 20px;
+  min-height: calc(100vh - 100px);
+  background: $bg-light;
 }
 
 .dashboard-intro {
   margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid $border-color-light;
 
   h2 {
-    color: #303133;
+    color: $text-primary;
+    font-size: 28px;
+    font-weight: 700;
     margin-bottom: 10px;
   }
 
   p {
-    color: #606266;
+    color: $text-secondary;
     font-size: 16px;
   }
 }
@@ -1222,6 +1242,9 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
 }
 
 .stat-card {
+  border-radius: 12px;
+  border: 1px solid $border-color-light;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
 
   &:hover {
@@ -1235,6 +1258,7 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
     &:hover {
       transform: translateY(-5px);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      border-color: $primary-color;
     }
     
     &:active {
@@ -1266,7 +1290,8 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
 
 .stat-icon {
   font-size: 48px;
-  color: #409eff;
+  color: $primary-color;
+  opacity: 0.8;
 }
 
 .stat-trend {
@@ -1290,6 +1315,20 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid $border-color-light;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+
+  :deep(.el-card__header) {
+    background: $bg-light;
+    border-bottom: 1px solid $border-color-light;
+    padding: 16px 20px;
+  }
+
+  :deep(.el-card__body) {
+    padding: 20px;
+  }
 }
 
 .card-header {
@@ -1299,8 +1338,9 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
 
   h3 {
     margin: 0;
-    color: #303133;
-    font-size: 16px;
+    color: $text-primary;
+    font-size: 18px;
+    font-weight: 700;
   }
 }
 
@@ -1410,6 +1450,15 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid $border-color-light;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  :deep(.el-card__header) {
+    background: $bg-light;
+    border-bottom: 1px solid $border-color-light;
+    padding: 16px 20px;
+  }
 }
 
 .empty-data {
@@ -1424,17 +1473,23 @@ const renderPetTypeChart = (distribution: Array<{ petType: string; count: number
 
 .recent-order-item {
   padding: 16px 0;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid $border-color-light;
   cursor: pointer;
   transition: all 0.3s ease;
+  border-radius: 8px;
+  margin: 0 4px;
+  padding-left: 12px;
+  padding-right: 12px;
 
   &:last-child {
     border-bottom: none;
   }
 
   &:hover {
-    background-color: #f5f7fa;
-    padding-left: 10px;
+    background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+    padding-left: 16px;
+    transform: translateX(4px);
+    border-left: 3px solid $primary-color;
   }
 }
 
